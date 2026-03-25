@@ -14,7 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chapters: {
+        Row: {
+          chapter_number: number
+          content: string
+          created_at: string
+          id: string
+          novel_id: string
+          status: string
+          title: string
+          updated_at: string
+          word_count: number
+        }
+        Insert: {
+          chapter_number: number
+          content?: string
+          created_at?: string
+          id?: string
+          novel_id: string
+          status?: string
+          title?: string
+          updated_at?: string
+          word_count?: number
+        }
+        Update: {
+          chapter_number?: number
+          content?: string
+          created_at?: string
+          id?: string
+          novel_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          word_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapters_novel_id_fkey"
+            columns: ["novel_id"]
+            isOneToOne: false
+            referencedRelation: "novels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      novels: {
+        Row: {
+          cover_image: string | null
+          created_at: string
+          genres: string[]
+          id: string
+          language: string
+          master_concept: string | null
+          model: string
+          status: string
+          story_styles: string[]
+          synopsis: string
+          tags: string[]
+          target_chapters: number
+          title: string
+          updated_at: string
+          word_count: number
+          writing_style: string
+        }
+        Insert: {
+          cover_image?: string | null
+          created_at?: string
+          genres?: string[]
+          id?: string
+          language?: string
+          master_concept?: string | null
+          model?: string
+          status?: string
+          story_styles?: string[]
+          synopsis?: string
+          tags?: string[]
+          target_chapters?: number
+          title: string
+          updated_at?: string
+          word_count?: number
+          writing_style?: string
+        }
+        Update: {
+          cover_image?: string | null
+          created_at?: string
+          genres?: string[]
+          id?: string
+          language?: string
+          master_concept?: string | null
+          model?: string
+          status?: string
+          story_styles?: string[]
+          synopsis?: string
+          tags?: string[]
+          target_chapters?: number
+          title?: string
+          updated_at?: string
+          word_count?: number
+          writing_style?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
