@@ -124,7 +124,7 @@ export default function ChapterReader() {
             {chapters.map((chapter, idx) => (
               <article
                 key={chapter.id}
-                ref={(el) => { if (el) chapterRefs.current.set(chapter.chapter_number, el); }}
+                ref={(el: HTMLDivElement | null) => { if (el) chapterRefs.current.set(chapter.chapter_number, el); }}
                 className="animate-fade-in"
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
