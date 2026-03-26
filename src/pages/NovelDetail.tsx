@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ArrowLeft, BookOpen, Pencil, Trash2, Loader2, Sparkles, RefreshCw,
-  ChevronDown, ChevronUp,
+  ArrowLeft, BookOpen, Trash2, Loader2, Sparkles, RefreshCw,
+  FileText, Feather, Palette, ScrollText, Info,
 } from "lucide-react";
 import { FormattedContent } from "@/components/FormattedContent";
 import { CharacterList } from "@/components/CharacterList";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 
 export default function NovelDetail() {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +24,6 @@ export default function NovelDetail() {
   const [generatingConcept, setGeneratingConcept] = useState(false);
   const [streamContent, setStreamContent] = useState("");
   const [streamType, setStreamType] = useState<"chapter" | "concept" | null>(null);
-  const [showConcept, setShowConcept] = useState(false);
   const streamRef = useRef<AbortController | null>(null);
 
   const fetchNovel = useCallback(async () => {
@@ -48,6 +48,64 @@ export default function NovelDetail() {
 
   useEffect(() => { fetchNovel(); }, [fetchNovel]);
 
+  // Build dynamic writing style instructions from premise
+  const buildWritingStylePrompt = () => {
+    const chapterCount = chapters.length;
+    const totalChapters = novel?.target_chapters || 10;
+    const progress = chapterCount / totalChapters;
+
+    // Phase-based narrative pacing
+    let phaseInstruction = "";
+    if (progress < 0.15) {
+      phaseInstruction = `This is the INTRODUCTION phase. Focus on:
+- Rich world-building with vivid, detailed descriptions of settings and atmosphere
+- Introduce the protagonist through their daily life, inner thoughts, and personality
+- Plant subtle foreshadowing and hooks for the main conflict
+- Use long, immersive narration to establish the tone and mood
+- Include meaningful dialogue that reveals character personalities and relationships`;
+    } else if (progress < 0.35) {
+      phaseInstruction = `This is the RISING ACTION phase. Focus on:
+- Escalate conflicts and introduce new challenges
+- Deepen character relationships through extended dialogue exchanges
+- Show character growth through their reactions and decisions
+- Balance action sequences with emotional/reflective moments
+- Use longer dialogue scenes with subtext and tension`;
+    } else if (progress < 0.65) {
+      phaseInstruction = `This is the MIDDLE/DEVELOPMENT phase. Focus on:
+- Major plot developments and turning points
+- Complex character interactions with layered dialogue
+- Reveal hidden truths, betrayals, or alliances
+- Mix intense action with deep emotional scenes
+- Characters should face moral dilemmas and internal conflicts`;
+    } else if (progress < 0.85) {
+      phaseInstruction = `This is the CLIMAX BUILD-UP phase. Focus on:
+- Rapidly escalating stakes and tension
+- Confrontations with long, impactful dialogue exchanges
+- Characters making critical decisions
+- Bring storylines together toward the climax
+- Emotional peaks with powerful narrative descriptions`;
+    } else {
+      phaseInstruction = `This is the CLIMAX/RESOLUTION phase. Focus on:
+- The ultimate confrontation or resolution
+- Emotionally charged dialogue and narrative
+- Tie up major plot threads satisfyingly
+- Show the final transformation of characters
+- End with impact — either hopeful, bittersweet, or dramatic`;
+    }
+
+    // Core style defaults
+    const coreStyle = `
+WRITING STYLE RULES (MANDATORY):
+1. LONG NARRATION: Write rich, detailed narrative paragraphs. Describe environments, emotions, physical sensations, and inner thoughts extensively. Each narrative paragraph should be at least 3-5 sentences.
+2. LONG DIALOGUE: Write extended, natural dialogue exchanges. Characters should have back-and-forth conversations of 6-10+ lines minimum per dialogue scene. Dialogue must feel alive with personality, emotion, and subtext.
+3. SHOW, DON'T TELL: Use sensory details, body language, and actions to convey emotions rather than stating them directly.
+4. PACING: Alternate between narrative description and dialogue. After a dialogue scene, follow with narrative reflection or action. After narration, transition into dialogue naturally.
+5. SCENE STRUCTURE: Each chapter should have at least 2-3 distinct scenes with clear transitions.
+6. CHARACTER VOICE: Each character should have a distinct speaking pattern and vocabulary.`;
+
+    return `${coreStyle}\n\n${phaseInstruction}`;
+  };
+
   const streamGenerate = async (type: "chapter" | "concept") => {
     if (!novel) return;
     const isChapter = type === "chapter";
@@ -71,7 +129,6 @@ export default function NovelDetail() {
       const lastChapter = chapters.length > 0 ? chapters[chapters.length - 1] : null;
       const nextChapterNum = (lastChapter?.chapter_number || 0) + 1;
 
-      // Build genre terminology context
       const genreTerms: Record<string, string> = {
         "Cultivation": "Qi, Dao, Sect, Dantian, Spirit Root, Meridian, Spirit Beast, Alchemy, Formation Array, Nascent Soul, Immortal Realm, Tribulation Lightning, Cultivation Base",
         "Western Fantasy": "Mana, Spell, Knight, Dragon, Dungeon, Elf, Dwarf, Holy Magic, Dark Magic, Guild, Enchantment, Rune, Quest, King",
@@ -83,6 +140,13 @@ export default function NovelDetail() {
         .filter(Boolean)
         .join("\n");
 
+      // Character context for prompts
+      const characterContext = characters.length > 0
+        ? `=== ESTABLISHED CHARACTERS ===\n${characters.map((c: any) =>
+            `- ${c.name} (${c.role}): ${c.description}${c.traits?.length ? ` | Traits: ${c.traits.join(", ")}` : ""}`
+          ).join("\n")}\n`
+        : "";
+
       let systemPrompt: string;
       let userPrompt: string;
 
@@ -92,25 +156,31 @@ export default function NovelDetail() {
 Title: ${novel.title}
 Genres: ${novel.genres.join(", ")}
 Synopsis: ${novel.synopsis}
-Writing Style: ${novel.writing_style}
+Writing Style: ${novel.writing_style || "Auto (long narration + rich dialogue)"}
 Target Chapters: ${novel.target_chapters}
+
+${characterContext}
 
 Include:
 1. Overall plot outline for ALL ${novel.target_chapters} chapters with high precision and creativity
 2. Main characters and their roles
 3. Core themes and main conflicts
 4. Story milestones per arc/chapter block
-5. Use genre-specific terminology throughout`;
+5. Narrative pacing plan: introduction → rising action → climax → resolution
+6. Use genre-specific terminology throughout`;
       } else {
-        // Send the FULL content of the last chapter + summary of earlier ones for continuity
         const lastChapterContent = lastChapter ? lastChapter.content : "";
         const earlierChaptersSummary = chapters.slice(0, -1).map((c: any) =>
           `Chapter ${c.chapter_number}: ${c.title} (${c.word_count} words) - ${c.content.slice(0, 300)}...`
         ).join("\n");
 
+        const writingStylePrompt = buildWritingStylePrompt();
+
         systemPrompt = `You are a masterful novel writer. Write the next chapter of a novel. Write in ${novel.language}. The chapter MUST be at minimum 2000 words.
 
-CRITICAL RULES:
+${writingStylePrompt}
+
+CRITICAL CONTINUITY RULES:
 1. You MUST continue the story from EXACTLY where the previous chapter ended. Read the last chapter carefully and pick up the narrative from its final scene.
 2. Do NOT repeat, rephrase, or retell any events that already happened in previous chapters.
 3. Do NOT restart the story or re-introduce characters that have already been introduced.
@@ -121,7 +191,8 @@ ${genreContext}`;
         userPrompt = `Novel: ${novel.title}
 Genres: ${novel.genres.join(", ")}
 Synopsis: ${novel.synopsis}
-Writing Style: ${novel.writing_style}
+
+${characterContext}
 
 ${novel.master_concept ? `=== MASTER CONCEPT (use as story guide) ===\n${novel.master_concept}\n` : ""}
 
@@ -130,7 +201,8 @@ ${earlierChaptersSummary ? `=== EARLIER CHAPTERS SUMMARY ===\n${earlierChaptersS
 ${lastChapterContent ? `=== LAST CHAPTER (Chapter ${lastChapter!.chapter_number}) - FULL CONTENT ===\n${lastChapterContent}\n\n=== END OF LAST CHAPTER ===` : "This is the first chapter of the novel."}
 
 Now write Chapter ${nextChapterNum}. Start with a chapter title in format "Chapter ${nextChapterNum}: [Title]".
-The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0)} ended. Do NOT repeat any previous content. Minimum 2000 words.`;
+The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0)} ended. Do NOT repeat any previous content. Minimum 2000 words.
+Remember: LONG narration + LONG dialogue. Make the story feel alive.`;
       }
 
       const response = await fetch(`${host}/v1/chat/completions`, {
@@ -181,12 +253,10 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
         }
       }
 
-      // Save result
       if (type === "concept") {
         await supabase.from("novels").update({ master_concept: fullContent }).eq("id", id);
         toast({ title: "Master concept berhasil di-generate!" });
       } else {
-        // Parse chapter title
         const titleMatch = fullContent.match(/^(?:Chapter\s+\d+[:\s]+)(.+?)(?:\n|$)/i);
         const chapterTitle = titleMatch ? titleMatch[1].trim() : `Chapter ${nextChapterNum}`;
         const wordCount = fullContent.split(/\s+/).length;
@@ -199,7 +269,6 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
           word_count: wordCount,
         });
 
-        // Update novel word count
         const totalWords = chapters.reduce((sum: number, c: any) => sum + c.word_count, 0) + wordCount;
         await supabase.from("novels").update({
           word_count: totalWords,
@@ -230,6 +299,17 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
     else { toast({ title: "Bab dihapus" }); fetchNovel(); }
   };
 
+  // Compute current writing phase label
+  const getPhaseLabel = () => {
+    if (!novel) return "";
+    const progress = chapters.length / (novel.target_chapters || 10);
+    if (progress < 0.15) return "📖 Pengenalan";
+    if (progress < 0.35) return "📈 Rising Action";
+    if (progress < 0.65) return "⚔️ Development";
+    if (progress < 0.85) return "🔥 Klimaks Build-up";
+    return "🏁 Klimaks & Resolusi";
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -256,12 +336,12 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="container max-w-4xl py-8 space-y-8">
+      <main className="container max-w-4xl py-8 space-y-6">
         <Button asChild variant="ghost" size="sm">
           <Link to="/"><ArrowLeft className="mr-1 h-4 w-4" /> Kembali</Link>
         </Button>
 
-        {/* Novel Info */}
+        {/* Novel Header - Compact */}
         <div className="flex flex-col sm:flex-row gap-6">
           <div className="w-full sm:w-48 h-64 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
             {novel.cover_image ? (
@@ -282,15 +362,13 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
               ))}
             </div>
 
-            <p className="text-muted-foreground">{novel.synopsis}</p>
-
             <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <span>📚 {chapters.length} Bab</span>
+              <span>📚 {chapters.length}/{novel.target_chapters} Bab</span>
               <span>📝 {novel.word_count?.toLocaleString()} kata</span>
               <span>🌐 {novel.language}</span>
               <span>🤖 {novel.model}</span>
-              <span>✍️ {novel.writing_style || "-"}</span>
               <Badge variant="secondary">{novel.status}</Badge>
+              <Badge variant="outline" className="border-primary/30 text-primary">{getPhaseLabel()}</Badge>
             </div>
 
             {novel.tags?.length > 0 && (
@@ -311,53 +389,84 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
           </div>
         </div>
 
-        {/* Master Concept */}
-        <div className="rounded-lg border border-border bg-card p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" /> Master Concept
-            </h2>
-            <div className="flex gap-2">
-              {novel.master_concept && (
-                <Button variant="ghost" size="sm" onClick={() => setShowConcept(!showConcept)}>
-                  {showConcept ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => streamGenerate("concept")}
-                disabled={generatingConcept || generating}
-              >
-                {generatingConcept ? (
-                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="mr-1 h-4 w-4" />
-                )}
-                {novel.master_concept ? "Regenerate" : "Generate"}
-              </Button>
+        {/* Synopsis */}
+        <CollapsibleSection
+          icon={<ScrollText className="h-5 w-5 text-primary" />}
+          title="Sinopsis"
+          hasContent={!!novel.synopsis}
+          emptyText="Sinopsis belum diisi."
+        >
+          <p className="text-foreground/90 leading-relaxed whitespace-pre-line">{novel.synopsis}</p>
+        </CollapsibleSection>
+
+        {/* Writing Style & Narrative Phase */}
+        <CollapsibleSection
+          icon={<Feather className="h-5 w-5 text-primary" />}
+          title="Gaya Penulisan"
+          hasContent={true}
+        >
+          <div className="space-y-3">
+            <div>
+              <span className="font-semibold text-foreground">Gaya Manual:</span>{" "}
+              <span className="text-foreground/80">{novel.writing_style || "Otomatis"}</span>
+            </div>
+            {novel.story_styles?.length > 0 && (
+              <div>
+                <span className="font-semibold text-foreground">Sudut Pandang:</span>{" "}
+                <span className="text-foreground/80">{novel.story_styles.join(", ")}</span>
+              </div>
+            )}
+            <div className="border-t border-border pt-3 mt-3">
+              <span className="font-semibold text-foreground">Fase Narasi Saat Ini:</span>{" "}
+              <Badge variant="outline" className="border-primary/30 text-primary ml-1">{getPhaseLabel()}</Badge>
+              <p className="text-foreground/70 mt-1 text-xs leading-relaxed">
+                Gaya penulisan otomatis menyesuaikan dengan progres cerita. Narasi panjang & dialog mendalam diutamakan di setiap fase.
+              </p>
+            </div>
+            <div className="border-t border-border pt-3">
+              <span className="font-semibold text-foreground">Prinsip Otomatis:</span>
+              <ul className="list-disc list-inside text-foreground/70 mt-1 space-y-1 text-xs">
+                <li>Narasi deskriptif panjang (min. 3-5 kalimat per paragraf)</li>
+                <li>Dialog hidup & mendalam (min. 6-10+ baris per adegan dialog)</li>
+                <li>Show, don't tell — emosi via detail sensorik</li>
+                <li>Setiap bab minimal 2-3 adegan dengan transisi jelas</li>
+                <li>Setiap karakter punya gaya bicara unik</li>
+              </ul>
             </div>
           </div>
+        </CollapsibleSection>
 
-          {streamType === "concept" && streamContent && (
-            <div className="text-sm bg-parchment dark:bg-secondary rounded-lg p-4 max-h-96 overflow-y-auto">
+        {/* Master Concept */}
+        <CollapsibleSection
+          icon={<Sparkles className="h-5 w-5 text-primary" />}
+          title="Master Concept"
+          hasContent={!!(novel.master_concept || (streamType === "concept" && streamContent))}
+          emptyText="Master concept belum di-generate. Klik tombol Generate untuk membuat."
+          actions={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => streamGenerate("concept")}
+              disabled={generatingConcept || generating}
+            >
+              {generatingConcept ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-1 h-4 w-4" />
+              )}
+              {novel.master_concept ? "Regenerate" : "Generate"}
+            </Button>
+          }
+        >
+          {streamType === "concept" && streamContent ? (
+            <>
               <FormattedContent content={streamContent} />
               <span className="animate-pulse">▊</span>
-            </div>
+            </>
+          ) : (
+            novel.master_concept && <FormattedContent content={novel.master_concept} />
           )}
-
-          {!streamType && novel.master_concept && showConcept && (
-            <div className="text-sm bg-parchment dark:bg-secondary rounded-lg p-4 max-h-96 overflow-y-auto">
-              <FormattedContent content={novel.master_concept} />
-            </div>
-          )}
-
-          {!novel.master_concept && streamType !== "concept" && (
-            <p className="text-sm text-muted-foreground">
-              Master concept belum di-generate. Klik tombol Generate untuk membuat.
-            </p>
-          )}
-        </div>
+        </CollapsibleSection>
 
         {/* Characters */}
         <CharacterList
@@ -368,9 +477,11 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
         />
 
         {/* Chapters */}
-        <div className="space-y-4">
+        <div className="rounded-lg border border-border bg-card p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl font-semibold">Daftar Bab</h2>
+            <h2 className="font-display text-xl font-semibold flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" /> Daftar Bab
+            </h2>
             <Button
               onClick={() => streamGenerate("chapter")}
               disabled={generating || generatingConcept}
@@ -384,16 +495,15 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
             </Button>
           </div>
 
-          {/* Streaming chapter content */}
           {streamType === "chapter" && streamContent && (
-            <div className="rounded-lg border border-primary/20 bg-parchment dark:bg-secondary p-6 max-h-96 overflow-y-auto">
-              <FormattedContent content={streamContent} className="text-sm" />
+            <div className="text-sm bg-parchment dark:bg-secondary rounded-lg p-4 max-h-96 overflow-y-auto">
+              <FormattedContent content={streamContent} />
               <span className="animate-pulse">▊</span>
             </div>
           )}
 
           {chapters.length === 0 && !generating ? (
-            <p className="text-center py-8 text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Belum ada bab. Generate master concept terlebih dahulu, lalu generate bab pertama.
             </p>
           ) : (
@@ -401,7 +511,7 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
               {chapters.map((chapter) => (
                 <div
                   key={chapter.id}
-                  className="flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:bg-secondary/50"
+                  className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-4 transition-colors hover:bg-secondary/50"
                 >
                   <div className="flex-1">
                     <h3 className="font-display font-medium">
