@@ -10,6 +10,7 @@ import {
   ChevronDown, ChevronUp,
 } from "lucide-react";
 import { FormattedContent } from "@/components/FormattedContent";
+import { CharacterList } from "@/components/CharacterList";
 
 export default function NovelDetail() {
   const { id } = useParams<{ id: string }>();
