@@ -132,9 +132,7 @@ export default function ChapterReader() {
                 <h2 className="font-display text-2xl font-bold text-center mb-8 text-primary">
                   Bab {chapter.chapter_number}: {chapter.title}
                 </h2>
-                <div className="prose-reader text-foreground whitespace-pre-wrap leading-[1.9]">
-                  {chapter.content}
-                </div>
+                <FormattedContent content={chapter.content} className="text-foreground leading-[1.9]" />
 
                 {/* Chapter navigation */}
                 <div className="flex justify-between items-center mt-12 pt-8 border-t border-border">
