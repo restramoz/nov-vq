@@ -5,6 +5,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { FormattedContent } from "@/components/FormattedContent";
 
 export default function ChapterReader() {
   const { id } = useParams<{ id: string }>();
