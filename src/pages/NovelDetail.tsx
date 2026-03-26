@@ -359,6 +359,14 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
           )}
         </div>
 
+        {/* Characters */}
+        <CharacterList
+          novelId={id!}
+          novel={novel}
+          characters={characters}
+          onRefresh={fetchNovel}
+        />
+
         {/* Chapters */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
