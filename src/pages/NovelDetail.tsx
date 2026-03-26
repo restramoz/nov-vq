@@ -17,6 +17,7 @@ export default function NovelDetail() {
   const { toast } = useToast();
   const [novel, setNovel] = useState<any>(null);
   const [chapters, setChapters] = useState<any[]>([]);
+  const [characters, setCharacters] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [generatingConcept, setGeneratingConcept] = useState(false);
