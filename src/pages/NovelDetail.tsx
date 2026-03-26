@@ -10,12 +10,14 @@ import {
   ChevronDown, ChevronUp,
 } from "lucide-react";
 import { FormattedContent } from "@/components/FormattedContent";
+import { CharacterList } from "@/components/CharacterList";
 
 export default function NovelDetail() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const [novel, setNovel] = useState<any>(null);
   const [chapters, setChapters] = useState<any[]>([]);
+  const [characters, setCharacters] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [generatingConcept, setGeneratingConcept] = useState(false);
@@ -28,13 +30,15 @@ export default function NovelDetail() {
     if (!id) return;
     setLoading(true);
     try {
-      const [novelRes, chaptersRes] = await Promise.all([
+      const [novelRes, chaptersRes, charsRes] = await Promise.all([
         supabase.from("novels").select("*").eq("id", id).single(),
         supabase.from("chapters").select("*").eq("novel_id", id).order("chapter_number"),
+        supabase.from("characters").select("*").eq("novel_id", id).order("created_at"),
       ]);
       if (novelRes.error) throw novelRes.error;
       setNovel(novelRes.data);
       setChapters(chaptersRes.data || []);
+      setCharacters(charsRes.data || []);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -354,6 +358,14 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
             </p>
           )}
         </div>
+
+        {/* Characters */}
+        <CharacterList
+          novelId={id!}
+          novel={novel}
+          characters={characters}
+          onRefresh={fetchNovel}
+        />
 
         {/* Chapters */}
         <div className="space-y-4">

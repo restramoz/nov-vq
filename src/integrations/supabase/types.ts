@@ -58,6 +58,47 @@ export type Database = {
           },
         ]
       }
+      characters: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+          novel_id: string
+          role: string
+          traits: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          novel_id: string
+          role?: string
+          traits?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          novel_id?: string
+          role?: string
+          traits?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "characters_novel_id_fkey"
+            columns: ["novel_id"]
+            isOneToOne: false
+            referencedRelation: "novels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       novels: {
         Row: {
           cover_image: string | null
