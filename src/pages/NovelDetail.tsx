@@ -9,6 +9,7 @@ import {
   ArrowLeft, BookOpen, Pencil, Trash2, Loader2, Sparkles, RefreshCw,
   ChevronDown, ChevronUp,
 } from "lucide-react";
+import { FormattedContent } from "@/components/FormattedContent";
 
 export default function NovelDetail() {
   const { id } = useParams<{ id: string }>();
