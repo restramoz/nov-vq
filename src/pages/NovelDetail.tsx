@@ -30,13 +30,15 @@ export default function NovelDetail() {
     if (!id) return;
     setLoading(true);
     try {
-      const [novelRes, chaptersRes] = await Promise.all([
+      const [novelRes, chaptersRes, charsRes] = await Promise.all([
         supabase.from("novels").select("*").eq("id", id).single(),
         supabase.from("chapters").select("*").eq("novel_id", id).order("chapter_number"),
+        supabase.from("characters").select("*").eq("novel_id", id).order("created_at"),
       ]);
       if (novelRes.error) throw novelRes.error;
       setNovel(novelRes.data);
       setChapters(chaptersRes.data || []);
+      setCharacters(charsRes.data || []);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
