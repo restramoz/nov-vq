@@ -343,8 +343,8 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
           )}
 
           {!streamType && novel.master_concept && showConcept && (
-            <div className="prose-reader text-sm bg-parchment dark:bg-secondary rounded-lg p-4 max-h-96 overflow-y-auto whitespace-pre-wrap">
-              {novel.master_concept}
+            <div className="text-sm bg-parchment dark:bg-secondary rounded-lg p-4 max-h-96 overflow-y-auto">
+              <FormattedContent content={novel.master_concept} />
             </div>
           )}
 
