@@ -336,8 +336,8 @@ The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0
           </div>
 
           {streamType === "concept" && streamContent && (
-            <div className="prose-reader text-sm bg-parchment dark:bg-secondary rounded-lg p-4 max-h-96 overflow-y-auto whitespace-pre-wrap">
-              {streamContent}
+            <div className="text-sm bg-parchment dark:bg-secondary rounded-lg p-4 max-h-96 overflow-y-auto">
+              <FormattedContent content={streamContent} />
               <span className="animate-pulse">▊</span>
             </div>
           )}
