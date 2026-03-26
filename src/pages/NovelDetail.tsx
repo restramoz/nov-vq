@@ -98,21 +98,35 @@ Include:
 4. Story milestones per arc/chapter block
 5. Use genre-specific terminology throughout`;
       } else {
-        const previousContent = chapters.slice(-2).map((c: any) =>
-          `Chapter ${c.chapter_number}: ${c.title}\n${c.content.slice(0, 1000)}...`
-        ).join("\n\n");
+        // Send the FULL content of the last chapter + summary of earlier ones for continuity
+        const lastChapterContent = lastChapter ? lastChapter.content : "";
+        const earlierChaptersSummary = chapters.slice(0, -1).map((c: any) =>
+          `Chapter ${c.chapter_number}: ${c.title} (${c.word_count} words) - ${c.content.slice(0, 300)}...`
+        ).join("\n");
 
-        systemPrompt = `You are a masterful novel writer. Write the next chapter of a novel. Write in ${novel.language}. The chapter MUST be at minimum 2000 words. Continue the story naturally without repeating previous narration. ${genreContext}`;
+        systemPrompt = `You are a masterful novel writer. Write the next chapter of a novel. Write in ${novel.language}. The chapter MUST be at minimum 2000 words.
+
+CRITICAL RULES:
+1. You MUST continue the story from EXACTLY where the previous chapter ended. Read the last chapter carefully and pick up the narrative from its final scene.
+2. Do NOT repeat, rephrase, or retell any events that already happened in previous chapters.
+3. Do NOT restart the story or re-introduce characters that have already been introduced.
+4. Advance the plot forward with new events, dialogue, and developments.
+5. Maintain consistency with all established characters, settings, and plot points.
+${genreContext}`;
+
         userPrompt = `Novel: ${novel.title}
 Genres: ${novel.genres.join(", ")}
 Synopsis: ${novel.synopsis}
 Writing Style: ${novel.writing_style}
 
-${novel.master_concept ? `Master Concept:\n${novel.master_concept}\n` : ""}
+${novel.master_concept ? `=== MASTER CONCEPT (use as story guide) ===\n${novel.master_concept}\n` : ""}
 
-${previousContent ? `Previous chapters:\n${previousContent}\n` : ""}
+${earlierChaptersSummary ? `=== EARLIER CHAPTERS SUMMARY ===\n${earlierChaptersSummary}\n` : ""}
 
-Write Chapter ${nextChapterNum}. Start with a chapter title in format "Chapter ${nextChapterNum}: [Title]". The chapter must continue from where the story left off. Minimum 2000 words.`;
+${lastChapterContent ? `=== LAST CHAPTER (Chapter ${lastChapter!.chapter_number}) - FULL CONTENT ===\n${lastChapterContent}\n\n=== END OF LAST CHAPTER ===` : "This is the first chapter of the novel."}
+
+Now write Chapter ${nextChapterNum}. Start with a chapter title in format "Chapter ${nextChapterNum}: [Title]".
+The chapter MUST continue from where Chapter ${(lastChapter?.chapter_number || 0)} ended. Do NOT repeat any previous content. Minimum 2000 words.`;
       }
 
       const response = await fetch(`${host}/v1/chat/completions`, {
