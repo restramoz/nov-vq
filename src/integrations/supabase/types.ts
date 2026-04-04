@@ -101,6 +101,7 @@ export type Database = {
       }
       novels: {
         Row: {
+          audio_url: string | null
           cover_image: string | null
           created_at: string
           genres: string[]
@@ -119,6 +120,7 @@ export type Database = {
           writing_style: string
         }
         Insert: {
+          audio_url?: string | null
           cover_image?: string | null
           created_at?: string
           genres?: string[]
@@ -137,6 +139,7 @@ export type Database = {
           writing_style?: string
         }
         Update: {
+          audio_url?: string | null
           cover_image?: string | null
           created_at?: string
           genres?: string[]
