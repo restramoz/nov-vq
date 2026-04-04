@@ -29,19 +29,9 @@ export default function Index() {
   const fetchNovels = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from("novels")
-        .select("*", { count: "exact" })
-        .order("created_at", { ascending: false });
-
-      if (search) {
-        query = query.or(`title.ilike.%${search}%,synopsis.ilike.%${search}%`);
-      }
-
-      if (selectedGenres.length > 0) {
-        query = query.overlaps("genres", selectedGenres);
-      }
-
+      let query = supabase.from("novels").select("*", { count: "exact" }).order("created_at", { ascending: false });
+      if (search) query = query.or(`title.ilike.%${search}%,synopsis.ilike.%${search}%`);
+      if (selectedGenres.length > 0) query = query.overlaps("genres", selectedGenres);
       const from = (page - 1) * ITEMS_PER_PAGE;
       query = query.range(from, from + ITEMS_PER_PAGE - 1);
 
@@ -50,7 +40,6 @@ export default function Index() {
       setNovels(data || []);
       setTotalCount(count || 0);
 
-      // Collect unique genres
       if (data) {
         const genres = new Set<string>(DEFAULT_GENRES);
         data.forEach((n: any) => n.genres?.forEach((g: string) => genres.add(g)));
@@ -68,18 +57,12 @@ export default function Index() {
   const handleDelete = async (id: string) => {
     if (!confirm("Hapus novel ini?")) return;
     const { error } = await supabase.from("novels").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Novel dihapus" });
-      fetchNovels();
-    }
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: "Novel dihapus" }); fetchNovels(); }
   };
 
   const toggleGenre = (genre: string) => {
-    setSelectedGenres((prev) =>
-      prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre]
-    );
+    setSelectedGenres((prev) => prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre]);
     setPage(1);
   };
 
@@ -88,17 +71,15 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-
       <main className="container py-8 space-y-6">
-        {/* Hero */}
         <div className="text-center space-y-2">
           <h1 className="font-display text-4xl font-bold text-foreground">
-            Perpustakaan <span className="text-primary">Novel AI</span>
+            <span className="rune-text" style={{ fontFamily: 'MedievalSharp, serif' }}>ᛟ</span>{" "}
+            Perpustakaan <span className="rune-text">Novel AI</span>
           </h1>
-          <p className="text-muted-foreground">Buat dan baca novel yang di-generate oleh AI</p>
+          <p className="text-muted-foreground">Buat dan baca novel yang di-generate oleh Ollama AI</p>
         </div>
 
-        {/* Search & Filter */}
         <div className="space-y-4">
           <div className="relative max-w-md mx-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -112,28 +93,18 @@ export default function Index() {
 
           <div className="flex flex-wrap gap-2 justify-center">
             {allGenres.map((genre) => (
-              <Badge
-                key={genre}
-                variant={selectedGenres.includes(genre) ? "default" : "outline"}
-                className="cursor-pointer transition-colors"
-                onClick={() => toggleGenre(genre)}
-              >
+              <Badge key={genre} variant={selectedGenres.includes(genre) ? "default" : "outline"} className="cursor-pointer transition-colors" onClick={() => toggleGenre(genre)}>
                 {genre}
               </Badge>
             ))}
             {selectedGenres.length > 0 && (
-              <Badge
-                variant="outline"
-                className="cursor-pointer text-destructive border-destructive"
-                onClick={() => { setSelectedGenres([]); setPage(1); }}
-              >
+              <Badge variant="outline" className="cursor-pointer text-destructive border-destructive" onClick={() => { setSelectedGenres([]); setPage(1); }}>
                 Reset
               </Badge>
             )}
           </div>
         </div>
 
-        {/* Novel Grid */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -144,11 +115,9 @@ export default function Index() {
           <div className="text-center py-16 space-y-4">
             <BookOpen className="mx-auto h-16 w-16 text-muted-foreground/40" />
             <p className="text-muted-foreground">
-              {search || selectedGenres.length > 0
-                ? "Tidak ada novel yang ditemukan."
-                : "Belum ada novel. Mulai buat novel pertamamu!"}
+              {search || selectedGenres.length > 0 ? "Tidak ada novel yang ditemukan." : "Belum ada novel. Mulai buat novel pertamamu!"}
             </p>
-            <Button asChild>
+            <Button asChild className="rune-glow">
               <Link to="/create"><Plus className="mr-1 h-4 w-4" /> Buat Novel Baru</Link>
             </Button>
           </div>
@@ -171,28 +140,11 @@ export default function Index() {
               ))}
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
-                >
-                  Sebelumnya
-                </Button>
-                <span className="flex items-center px-3 text-sm text-muted-foreground">
-                  {page} / {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(page + 1)}
-                >
-                  Berikutnya
-                </Button>
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Sebelumnya</Button>
+                <span className="flex items-center px-3 text-sm text-muted-foreground">{page} / {totalPages}</span>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Berikutnya</Button>
               </div>
             )}
           </>

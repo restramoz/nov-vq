@@ -30,6 +30,8 @@ const STORY_STYLES = [
   "Nonlinear", "Stream of Consciousness",
 ];
 
+const OLLAMA_MODELS = ["deepseek-v3.2:cloud", "glm-5:cloud"];
+
 export default function CreateNovel() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -41,7 +43,7 @@ export default function CreateNovel() {
     synopsis: "",
     tags: [] as string[],
     language: "Indonesia",
-    model: "qwen-3-235b-a22b-instruct-2507",
+    model: localStorage.getItem("ollama_model") || "deepseek-v3.2:cloud",
     writing_style: "",
     story_styles: [] as string[],
     target_chapters: 10,
@@ -54,42 +56,24 @@ export default function CreateNovel() {
   const updateField = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
 
   const toggleGenre = (genre: string) => {
-    updateField(
-      "genres",
-      form.genres.includes(genre)
-        ? form.genres.filter((g) => g !== genre)
-        : [...form.genres, genre]
-    );
+    updateField("genres", form.genres.includes(genre) ? form.genres.filter((g) => g !== genre) : [...form.genres, genre]);
   };
 
   const addCustomGenre = () => {
     const g = customGenre.trim();
-    if (g && !form.genres.includes(g)) {
-      updateField("genres", [...form.genres, g]);
-      setCustomGenre("");
-    }
+    if (g && !form.genres.includes(g)) { updateField("genres", [...form.genres, g]); setCustomGenre(""); }
   };
 
   const toggleStoryStyle = (style: string) => {
-    updateField(
-      "story_styles",
-      form.story_styles.includes(style)
-        ? form.story_styles.filter((s) => s !== style)
-        : [...form.story_styles, style]
-    );
+    updateField("story_styles", form.story_styles.includes(style) ? form.story_styles.filter((s) => s !== style) : [...form.story_styles, style]);
   };
 
   const addTag = () => {
     const t = tagInput.trim();
-    if (t && !form.tags.includes(t)) {
-      updateField("tags", [...form.tags, t]);
-      setTagInput("");
-    }
+    if (t && !form.tags.includes(t)) { updateField("tags", [...form.tags, t]); setTagInput(""); }
   };
 
-  const removeTag = (tag: string) => {
-    updateField("tags", form.tags.filter((t) => t !== tag));
-  };
+  const removeTag = (tag: string) => updateField("tags", form.tags.filter((t) => t !== tag));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,82 +119,57 @@ export default function CreateNovel() {
           <Link to="/"><ArrowLeft className="mr-1 h-4 w-4" /> Kembali</Link>
         </Button>
 
-        <h1 className="font-display text-3xl font-bold mb-6">Buat Novel Baru</h1>
+        <h1 className="font-display text-3xl font-bold mb-6 rune-text">ᛟ Buat Novel Baru</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">Judul *</Label>
             <Input id="title" value={form.title} onChange={(e) => updateField("title", e.target.value)} placeholder="Judul novel..." />
           </div>
 
-          {/* Genre */}
           <div className="space-y-2">
             <Label>Genre * (pilih satu atau lebih)</Label>
             <div className="flex flex-wrap gap-2">
               {GENRE_OPTIONS.map((genre) => (
-                <Badge
-                  key={genre}
-                  variant={form.genres.includes(genre) ? "default" : "outline"}
-                  className="cursor-pointer transition-colors"
-                  onClick={() => toggleGenre(genre)}
-                >
+                <Badge key={genre} variant={form.genres.includes(genre) ? "default" : "outline"} className="cursor-pointer transition-colors" onClick={() => toggleGenre(genre)}>
                   {genre}
                 </Badge>
               ))}
             </div>
             <div className="flex gap-2">
-              <Input
-                placeholder="Genre kustom..."
-                value={customGenre}
-                onChange={(e) => setCustomGenre(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomGenre(); } }}
-                className="flex-1"
-              />
+              <Input placeholder="Genre kustom..." value={customGenre} onChange={(e) => setCustomGenre(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomGenre(); } }} className="flex-1" />
               <Button type="button" variant="outline" size="sm" onClick={addCustomGenre}>Tambah</Button>
             </div>
             {form.genres.filter((g) => !GENRE_OPTIONS.includes(g)).length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {form.genres.filter((g) => !GENRE_OPTIONS.includes(g)).map((g) => (
-                  <Badge key={g} className="cursor-pointer" onClick={() => toggleGenre(g)}>
-                    {g} <X className="ml-1 h-3 w-3" />
-                  </Badge>
+                  <Badge key={g} className="cursor-pointer" onClick={() => toggleGenre(g)}>{g} <X className="ml-1 h-3 w-3" /></Badge>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Synopsis */}
           <div className="space-y-2">
             <Label htmlFor="synopsis">Sinopsis / Premis *</Label>
             <Textarea id="synopsis" value={form.synopsis} onChange={(e) => updateField("synopsis", e.target.value)} rows={5} placeholder="Ceritakan premis novel..." />
           </div>
 
-          {/* Tags */}
           <div className="space-y-2">
             <Label>Tags</Label>
             <div className="flex gap-2">
-              <Input
-                placeholder="Tambah tag..."
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
-              />
+              <Input placeholder="Tambah tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }} />
               <Button type="button" variant="outline" size="sm" onClick={addTag}>Tambah</Button>
             </div>
             {form.tags.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {form.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>
-                    {tag} <X className="ml-1 h-3 w-3" />
-                  </Badge>
+                  <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>{tag} <X className="ml-1 h-3 w-3" /></Badge>
                 ))}
               </div>
             )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Language */}
             <div className="space-y-2">
               <Label>Bahasa</Label>
               <Select value={form.language} onValueChange={(v) => updateField("language", v)}>
@@ -221,14 +180,17 @@ export default function CreateNovel() {
               </Select>
             </div>
 
-            {/* Model */}
             <div className="space-y-2">
-              <Label>Model AI</Label>
-              <Input value={form.model} onChange={(e) => updateField("model", e.target.value)} />
+              <Label>Model AI (Ollama)</Label>
+              <Select value={form.model} onValueChange={(v) => updateField("model", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {OLLAMA_MODELS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Writing Style */}
           <div className="space-y-2">
             <Label>Gaya Penulisan</Label>
             <Select value={form.writing_style} onValueChange={(v) => updateField("writing_style", v)}>
@@ -239,44 +201,30 @@ export default function CreateNovel() {
             </Select>
           </div>
 
-          {/* Story Styles */}
           <div className="space-y-2">
             <Label>Gaya Cerita</Label>
             <div className="flex flex-wrap gap-2">
               {STORY_STYLES.map((style) => (
-                <Badge
-                  key={style}
-                  variant={form.story_styles.includes(style) ? "default" : "outline"}
-                  className="cursor-pointer transition-colors"
-                  onClick={() => toggleStoryStyle(style)}
-                >
+                <Badge key={style} variant={form.story_styles.includes(style) ? "default" : "outline"} className="cursor-pointer transition-colors" onClick={() => toggleStoryStyle(style)}>
                   {style}
                 </Badge>
               ))}
             </div>
           </div>
 
-          {/* Target Chapters */}
           <div className="space-y-2">
             <Label htmlFor="target_chapters">Target Jumlah Bab</Label>
-            <Input
-              id="target_chapters"
-              type="number"
-              min={1}
-              value={form.target_chapters}
-              onChange={(e) => updateField("target_chapters", parseInt(e.target.value) || 1)}
-            />
+            <Input id="target_chapters" type="number" min={1} value={form.target_chapters} onChange={(e) => updateField("target_chapters", parseInt(e.target.value) || 1)} />
           </div>
 
-          {/* Cover Image */}
           <div className="space-y-2">
             <Label htmlFor="cover_image">Cover Image URL</Label>
             <Input id="cover_image" value={form.cover_image} onChange={(e) => updateField("cover_image", e.target.value)} placeholder="https://..." />
           </div>
 
-          <Button type="submit" className="w-full" disabled={saving}>
+          <Button type="submit" className="w-full rune-glow" disabled={saving}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Simpan Novel
+            ᛟ Simpan Novel
           </Button>
         </form>
       </main>

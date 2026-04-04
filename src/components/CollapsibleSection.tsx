@@ -24,7 +24,7 @@ export function CollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6 space-y-4">
+    <div className="rounded-lg rune-border bg-card p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl font-semibold flex items-center gap-2">
           {icon} {title}
