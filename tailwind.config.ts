@@ -59,6 +59,11 @@ export default {
         },
         parchment: "hsl(var(--parchment))",
         ink: "hsl(var(--ink))",
+        rune: {
+          DEFAULT: "hsl(var(--rune))",
+          glow: "hsl(var(--rune-glow))",
+          dark: "hsl(var(--rune-dark))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

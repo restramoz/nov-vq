@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BookOpen, Plus, Settings } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "@/components/ui/button";
 

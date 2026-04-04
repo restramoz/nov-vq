@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronLeft, ChevronRight, Menu, X, Music, Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { FormattedContent } from "@/components/FormattedContent";
-import { Slider } from "@/components/ui/slider";
+
 
 // Reading progress helpers
 function saveReadingProgress(novelId: string, chapterNum: number, scrollPercent: number) {
