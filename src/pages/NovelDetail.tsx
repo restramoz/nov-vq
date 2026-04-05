@@ -13,7 +13,9 @@ import { FormattedContent } from "@/components/FormattedContent";
 import { CharacterList } from "@/components/CharacterList";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { MusicPlayer } from "@/components/MusicPlayer";
-import { ollamaGenerate } from "@/lib/ollama";
+import { EditNovelDialog } from "@/components/EditNovelDialog";
+import { ollamaGenerateStream } from "@/lib/ollama";
+import { getPromptForPhase, PROMPTS } from "@/lib/prompts";
 
 export default function NovelDetail() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +26,7 @@ export default function NovelDetail() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [generatingConcept, setGeneratingConcept] = useState(false);
+  const [streamText, setStreamText] = useState("");
 
   const fetchNovel = useCallback(async () => {
     if (!id) return;
@@ -47,66 +50,26 @@ export default function NovelDetail() {
 
   useEffect(() => { fetchNovel(); }, [fetchNovel]);
 
-  const buildWritingStylePrompt = () => {
-    const chapterCount = chapters.length;
-    const totalChapters = novel?.target_chapters || 10;
-    const progress = chapterCount / totalChapters;
-
-    let phaseInstruction = "";
-    if (progress < 0.15) {
-      phaseInstruction = `This is the INTRODUCTION phase. Focus on:
-- Rich world-building with vivid, detailed descriptions
-- Introduce the protagonist through daily life, inner thoughts, personality
-- Plant subtle foreshadowing and hooks
-- Use long, immersive narration
-- Include meaningful dialogue that reveals character personalities`;
-    } else if (progress < 0.35) {
-      phaseInstruction = `This is the RISING ACTION phase. Focus on:
-- Escalate conflicts and introduce challenges
-- Deepen character relationships through extended dialogue
-- Show character growth through reactions and decisions
-- Balance action with emotional/reflective moments`;
-    } else if (progress < 0.65) {
-      phaseInstruction = `This is the MIDDLE/DEVELOPMENT phase. Focus on:
-- Major plot developments and turning points
-- Complex character interactions with layered dialogue
-- Reveal hidden truths, betrayals, or alliances
-- Characters face moral dilemmas and internal conflicts`;
-    } else if (progress < 0.85) {
-      phaseInstruction = `This is the CLIMAX BUILD-UP phase. Focus on:
-- Rapidly escalating stakes and tension
-- Confrontations with impactful dialogue
-- Characters making critical decisions
-- Bring storylines together toward the climax`;
-    } else {
-      phaseInstruction = `This is the CLIMAX/RESOLUTION phase. Focus on:
-- The ultimate confrontation or resolution
-- Emotionally charged dialogue and narrative
-- Tie up major plot threads
-- Show final transformation of characters`;
-    }
-
-    const coreStyle = `
-WRITING STYLE RULES (MANDATORY):
-1. LONG NARRATION: Rich, detailed narrative paragraphs. Min 3-5 sentences per paragraph.
-2. LONG DIALOGUE: Extended, natural dialogue exchanges. Min 6-10+ lines per dialogue scene.
-3. SHOW, DON'T TELL: Use sensory details, body language, and actions.
-4. PACING: Alternate between narrative description and dialogue.
-5. SCENE STRUCTURE: Each chapter should have 2-3 distinct scenes.
-6. CHARACTER VOICE: Each character has distinct speaking patterns.`;
-
-    return `${coreStyle}\n\n${phaseInstruction}`;
+  const getPhaseLabel = () => {
+    if (!novel) return "";
+    const progress = chapters.length / (novel.target_chapters || 10);
+    if (progress < 0.15) return "ᛟ Pengenalan";
+    if (progress < 0.35) return "ᚱ Rising Action";
+    if (progress < 0.65) return "ᛏ Development";
+    if (progress < 0.85) return "ᚦ Klimaks Build-up";
+    return "ᛉ Klimaks & Resolusi";
   };
 
   const generate = async (type: "chapter" | "concept") => {
     if (!novel) return;
     const isChapter = type === "chapter";
-    if (isChapter) setGenerating(true);
+    if (isChapter) { setGenerating(true); setStreamText(""); }
     else setGeneratingConcept(true);
 
     try {
       const lastChapter = chapters.length > 0 ? chapters[chapters.length - 1] : null;
       const nextChapterNum = (lastChapter?.chapter_number || 0) + 1;
+      const progress = chapters.length / (novel.target_chapters || 10);
 
       const genreTerms: Record<string, string> = {
         "Cultivation": "Qi, Dao, Sect, Dantian, Spirit Root, Meridian, Spirit Beast, Alchemy",
@@ -128,7 +91,7 @@ WRITING STYLE RULES (MANDATORY):
       let userPrompt: string;
 
       if (type === "concept") {
-        systemPrompt = `You are a master novel architect. Create a comprehensive master concept. Write in ${novel.language}. ${genreContext}`;
+        systemPrompt = `${PROMPTS.worldbuilding}\n\nYou are a master novel architect. Create a comprehensive master concept. Write in ${novel.language}. ${genreContext}`;
         userPrompt = `Create a master concept for:
 Title: ${novel.title}
 Genres: ${novel.genres.join(", ")}
@@ -148,11 +111,11 @@ Include:
           `Ch${c.chapter_number}: ${c.title} - ${c.content.slice(0, 300)}...`
         ).join("\n");
 
-        const writingStyle = buildWritingStylePrompt();
+        const phasePrompt = getPromptForPhase(progress);
 
-        systemPrompt = `You are a masterful novel writer. Write in ${novel.language}. Min 2000 words.
+        systemPrompt = `${phasePrompt}
 
-${writingStyle}
+Write in ${novel.language}. Min 2000 words.
 
 CRITICAL CONTINUITY RULES:
 1. Continue from EXACTLY where the previous chapter ended.
@@ -174,24 +137,26 @@ Continue from where Chapter ${lastChapter?.chapter_number || 0} ended. Min 2000 
 LONG narration + LONG dialogue. Make the story alive.`;
       }
 
-      const result = await ollamaGenerate([
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ]);
+      // Use streaming for chapters, non-streaming for concept
+      if (isChapter) {
+        let fullText = "";
+        for await (const chunk of ollamaGenerateStream([
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ])) {
+          fullText += chunk;
+          setStreamText(fullText);
+        }
 
-      if (type === "concept") {
-        await supabase.from("novels").update({ master_concept: result }).eq("id", id);
-        toast({ title: "Master concept berhasil di-generate!" });
-      } else {
-        const titleMatch = result.match(/^(?:Chapter\s+\d+[:\s]+)(.+?)(?:\n|$)/i);
+        const titleMatch = fullText.match(/^(?:Chapter\s+\d+[:\s]+)(.+?)(?:\n|$)/i);
         const chapterTitle = titleMatch ? titleMatch[1].trim() : `Chapter ${nextChapterNum}`;
-        const wordCount = result.split(/\s+/).length;
+        const wordCount = fullText.split(/\s+/).length;
 
         await supabase.from("chapters").insert({
           novel_id: id,
           chapter_number: nextChapterNum,
           title: chapterTitle,
-          content: result,
+          content: fullText,
           word_count: wordCount,
         });
 
@@ -199,6 +164,18 @@ LONG narration + LONG dialogue. Make the story alive.`;
         await supabase.from("novels").update({ word_count: totalWords, status: "ongoing" }).eq("id", id);
 
         toast({ title: `Chapter ${nextChapterNum} berhasil di-generate!` });
+        setStreamText("");
+      } else {
+        let fullText = "";
+        for await (const chunk of ollamaGenerateStream([
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ])) {
+          fullText += chunk;
+        }
+
+        await supabase.from("novels").update({ master_concept: fullText }).eq("id", id);
+        toast({ title: "Master concept berhasil di-generate!" });
       }
 
       fetchNovel();
@@ -215,16 +192,6 @@ LONG narration + LONG dialogue. Make the story alive.`;
     const { error } = await supabase.from("chapters").delete().eq("id", chapterId);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else { toast({ title: "Bab dihapus" }); fetchNovel(); }
-  };
-
-  const getPhaseLabel = () => {
-    if (!novel) return "";
-    const progress = chapters.length / (novel.target_chapters || 10);
-    if (progress < 0.15) return "ᛟ Pengenalan";
-    if (progress < 0.35) return "ᚱ Rising Action";
-    if (progress < 0.65) return "ᛏ Development";
-    if (progress < 0.85) return "ᚦ Klimaks Build-up";
-    return "ᛉ Klimaks & Resolusi";
   };
 
   if (loading) {
@@ -271,7 +238,10 @@ LONG narration + LONG dialogue. Make the story alive.`;
           </div>
 
           <div className="flex-1 space-y-3">
-            <h1 className="font-display text-3xl font-bold">{novel.title}</h1>
+            <div className="flex items-start justify-between gap-2">
+              <h1 className="font-display text-3xl font-bold">{novel.title}</h1>
+              <EditNovelDialog novel={novel} onUpdate={fetchNovel} />
+            </div>
 
             <div className="flex flex-wrap gap-1">
               {novel.genres?.map((g: string) => (
@@ -386,12 +356,21 @@ LONG narration + LONG dialogue. Make the story alive.`;
             </Button>
           </div>
 
+          {/* Streaming output */}
           {generating && (
-            <div className="flex items-center gap-3 py-8 justify-center rounded-lg bg-parchment dark:bg-secondary">
-              <Loader2 className="h-6 w-6 animate-spin rune-text" />
-              <span className="text-muted-foreground font-medium animate-pulse">
-                Chapter {(chapters.length > 0 ? chapters[chapters.length - 1].chapter_number : 0) + 1} sedang di-generate...
-              </span>
+            <div className="rounded-lg bg-parchment dark:bg-secondary p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <Loader2 className="h-5 w-5 animate-spin rune-text flex-shrink-0" />
+                <span className="text-sm font-medium rune-text animate-pulse">
+                  ᛟ Chapter {(chapters.length > 0 ? chapters[chapters.length - 1].chapter_number : 0) + 1} sedang di-generate...
+                </span>
+              </div>
+              {streamText && (
+                <div className="prose-reader max-h-96 overflow-y-auto rounded-lg bg-background/50 p-4 rune-border">
+                  <FormattedContent content={streamText} className="text-sm leading-relaxed mystical-typing" />
+                  <span className="inline-block w-0.5 h-4 bg-primary animate-pulse ml-0.5" />
+                </div>
+              )}
             </div>
           )}
 

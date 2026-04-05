@@ -30,7 +30,7 @@ const STORY_STYLES = [
   "Nonlinear", "Stream of Consciousness",
 ];
 
-const OLLAMA_MODELS = ["deepseek-v3.2:cloud", "glm-5:cloud"];
+const OLLAMA_MODELS = ["deepseek-v3.2:cloud", "glm-5:cloud", "nemotron-3-super:cloud"];
 
 export default function CreateNovel() {
   const navigate = useNavigate();
