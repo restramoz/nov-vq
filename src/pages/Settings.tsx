@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, TestTube2, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Save, TestTube2, Loader2, CheckCircle, XCircle, Key } from "lucide-react";
 import { Link } from "react-router-dom";
 import { testOllamaConnection } from "@/lib/ollama";
 
@@ -21,12 +21,14 @@ const FONT_OPTIONS = [
 const OLLAMA_MODELS = [
   "deepseek-v3.2:cloud",
   "glm-5:cloud",
+  "nemotron-3-super:cloud",
 ];
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const [ollamaUrl, setOllamaUrl] = useState("http://localhost:11434");
   const [ollamaModel, setOllamaModel] = useState("deepseek-v3.2:cloud");
+  const [ollamaApiKey, setOllamaApiKey] = useState("");
   const [preferredFont, setPreferredFont] = useState("Lora");
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<"success" | "error" | null>(null);
@@ -34,12 +36,14 @@ export default function SettingsPage() {
   useEffect(() => {
     setOllamaUrl(localStorage.getItem("ollama_url") || "http://localhost:11434");
     setOllamaModel(localStorage.getItem("ollama_model") || "deepseek-v3.2:cloud");
+    setOllamaApiKey(localStorage.getItem("ollama_api_key") || "");
     setPreferredFont(localStorage.getItem("preferred_font") || "Lora");
   }, []);
 
   const handleSave = () => {
     localStorage.setItem("ollama_url", ollamaUrl);
     localStorage.setItem("ollama_model", ollamaModel);
+    localStorage.setItem("ollama_api_key", ollamaApiKey);
     localStorage.setItem("preferred_font", preferredFont);
     toast({ title: "Pengaturan tersimpan!" });
   };
@@ -87,6 +91,25 @@ export default function SettingsPage() {
               onChange={(e) => setOllamaUrl(e.target.value)}
               placeholder="http://localhost:11434"
             />
+            <p className="text-xs text-muted-foreground">
+              Cloud endpoint: https://ollama.com/api/chat
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="ollama-api-key" className="flex items-center gap-1">
+              <Key className="h-3.5 w-3.5" /> API Key (opsional)
+            </Label>
+            <Input
+              id="ollama-api-key"
+              type="password"
+              value={ollamaApiKey}
+              onChange={(e) => setOllamaApiKey(e.target.value)}
+              placeholder="Masukkan API key jika diperlukan..."
+            />
+            <p className="text-xs text-muted-foreground">
+              Diperlukan untuk cloud endpoint. Header: Authorization: Bearer [key]
+            </p>
           </div>
 
           <div className="space-y-2">
