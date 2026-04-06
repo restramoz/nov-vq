@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, BookOpen, Trash2, Loader2, Sparkles, RefreshCw,
-  FileText, Feather, ScrollText,
+  FileText, Feather, ScrollText, Shield,
 } from "lucide-react";
 import { FormattedContent } from "@/components/FormattedContent";
 import { CharacterList } from "@/components/CharacterList";
@@ -16,10 +16,12 @@ import { MusicPlayer } from "@/components/MusicPlayer";
 import { EditNovelDialog } from "@/components/EditNovelDialog";
 import { ollamaGenerateStream } from "@/lib/ollama";
 import { getPromptForPhase, PROMPTS } from "@/lib/prompts";
+import { useMusic } from "@/contexts/MusicContext";
 
 export default function NovelDetail() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
+  const { setMusic } = useMusic();
   const [novel, setNovel] = useState<any>(null);
   const [chapters, setChapters] = useState<any[]>([]);
   const [characters, setCharacters] = useState<any[]>([]);
@@ -41,12 +43,17 @@ export default function NovelDetail() {
       setNovel(novelRes.data);
       setChapters(chaptersRes.data || []);
       setCharacters(charsRes.data || []);
+
+      // Set global music if novel has audio
+      if (novelRes.data?.audio_url) {
+        setMusic(novelRes.data.audio_url, novelRes.data.title);
+      }
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  }, [id, toast]);
+  }, [id, toast, setMusic]);
 
   useEffect(() => { fetchNovel(); }, [fetchNovel]);
 
@@ -137,7 +144,6 @@ Continue from where Chapter ${lastChapter?.chapter_number || 0} ended. Min 2000 
 LONG narration + LONG dialogue. Make the story alive.`;
       }
 
-      // Use streaming for chapters, non-streaming for concept
       if (isChapter) {
         let fullText = "";
         for await (const chunk of ollamaGenerateStream([
@@ -163,7 +169,7 @@ LONG narration + LONG dialogue. Make the story alive.`;
         const totalWords = chapters.reduce((sum: number, c: any) => sum + c.word_count, 0) + wordCount;
         await supabase.from("novels").update({ word_count: totalWords, status: "ongoing" }).eq("id", id);
 
-        toast({ title: `Chapter ${nextChapterNum} berhasil di-generate!` });
+        toast({ title: `Chapter ${nextChapterNum} berhasil ditempa!` });
         setStreamText("");
       } else {
         let fullText = "";
@@ -175,7 +181,7 @@ LONG narration + LONG dialogue. Make the story alive.`;
         }
 
         await supabase.from("novels").update({ master_concept: fullText }).eq("id", id);
-        toast({ title: "Master concept berhasil di-generate!" });
+        toast({ title: "Master concept berhasil ditempa!" });
       }
 
       fetchNovel();
@@ -200,6 +206,7 @@ LONG narration + LONG dialogue. Make the story alive.`;
         <AppHeader />
         <div className="container py-16 text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin rune-text" />
+          <p className="mt-3 text-muted-foreground font-display">Membuka gulungan...</p>
         </div>
       </div>
     );
@@ -210,8 +217,8 @@ LONG narration + LONG dialogue. Make the story alive.`;
       <div className="min-h-screen bg-background">
         <AppHeader />
         <div className="container py-16 text-center">
-          <p className="text-muted-foreground">Novel tidak ditemukan.</p>
-          <Button asChild className="mt-4"><Link to="/">Kembali</Link></Button>
+          <p className="text-muted-foreground">Gulungan tidak ditemukan.</p>
+          <Button asChild className="mt-4 rune-glow"><Link to="/">Kembali</Link></Button>
         </div>
       </div>
     );
@@ -225,52 +232,58 @@ LONG narration + LONG dialogue. Make the story alive.`;
           <Link to="/"><ArrowLeft className="mr-1 h-4 w-4" /> Kembali</Link>
         </Button>
 
-        {/* Novel Header */}
-        <div className="flex flex-col sm:flex-row gap-6">
-          <div className="w-full sm:w-48 h-64 rounded-lg overflow-hidden bg-secondary flex-shrink-0 rune-border">
-            {novel.cover_image ? (
-              <img src={novel.cover_image} alt={novel.title} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full items-center justify-center bg-gradient-to-br from-gold-dark to-gold">
-                <BookOpen className="h-16 w-16 text-primary-foreground/60" />
+        {/* Novel Header - Mythical */}
+        <div className="rounded-lg rune-border bg-card overflow-hidden">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+            <div className="flex flex-col sm:flex-row gap-6 p-6">
+              <div className="w-full sm:w-48 h-64 rounded-lg overflow-hidden rune-border flex-shrink-0">
+                {novel.cover_image ? (
+                  <img src={novel.cover_image} alt={novel.title} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex flex-col h-full items-center justify-center bg-gradient-to-br from-rune-dark via-card to-rune-dark/50 gap-2">
+                    <Shield className="h-10 w-10 rune-text" />
+                    <BookOpen className="h-8 w-8 text-primary/40" />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="flex-1 space-y-3">
-            <div className="flex items-start justify-between gap-2">
-              <h1 className="font-display text-3xl font-bold">{novel.title}</h1>
-              <EditNovelDialog novel={novel} onUpdate={fetchNovel} />
-            </div>
+              <div className="flex-1 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <h1 className="font-display text-3xl font-bold">{novel.title}</h1>
+                  <EditNovelDialog novel={novel} onUpdate={fetchNovel} />
+                </div>
 
-            <div className="flex flex-wrap gap-1">
-              {novel.genres?.map((g: string) => (
-                <Badge key={g} variant="outline" className="border-primary/30 rune-text">{g}</Badge>
-              ))}
-            </div>
+                <div className="flex flex-wrap gap-1">
+                  {novel.genres?.map((g: string) => (
+                    <Badge key={g} variant="outline" className="border-primary/30 rune-text">{g}</Badge>
+                  ))}
+                </div>
 
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <span>ᛟ {chapters.length}/{novel.target_chapters} Bab</span>
-              <span>ᚱ {novel.word_count?.toLocaleString()} kata</span>
-              <span>ᚹ {novel.language}</span>
-              <Badge variant="secondary">{novel.status}</Badge>
-              <Badge variant="outline" className="border-primary/30 rune-text">{getPhaseLabel()}</Badge>
-            </div>
+                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                  <span>ᛟ {chapters.length}/{novel.target_chapters} Bab</span>
+                  <span>ᚱ {novel.word_count?.toLocaleString()} kata</span>
+                  <span>ᚹ {novel.language}</span>
+                  <Badge variant="secondary">{novel.status}</Badge>
+                  <Badge variant="outline" className="border-primary/30 rune-text">{getPhaseLabel()}</Badge>
+                </div>
 
-            {novel.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {novel.tags.map((t: string) => (
-                  <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
-                ))}
+                {novel.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {novel.tags.map((t: string) => (
+                      <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  {chapters.length > 0 && (
+                    <Button asChild className="rune-glow">
+                      <Link to={`/novel/${id}/read`}><BookOpen className="mr-1 h-4 w-4" /> Baca</Link>
+                    </Button>
+                  )}
+                </div>
               </div>
-            )}
-
-            <div className="flex gap-2 pt-2">
-              {chapters.length > 0 && (
-                <Button asChild className="rune-glow">
-                  <Link to={`/novel/${id}/read`}><BookOpen className="mr-1 h-4 w-4" /> Baca</Link>
-                </Button>
-              )}
             </div>
           </div>
         </div>
@@ -318,13 +331,14 @@ LONG narration + LONG dialogue. Make the story alive.`;
           icon={<Sparkles className="h-5 w-5 rune-text" />}
           title="Master Concept"
           hasContent={!!novel.master_concept}
-          emptyText="Master concept belum di-generate."
+          emptyText="Master concept belum ditempa."
           actions={
             <Button
               variant="outline"
               size="sm"
               onClick={() => generate("concept")}
               disabled={generatingConcept || generating}
+              className="rune-border"
             >
               {generatingConcept ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1 h-4 w-4" />}
               {novel.master_concept ? "Regenerate" : "Generate"}
@@ -334,7 +348,7 @@ LONG narration + LONG dialogue. Make the story alive.`;
           {generatingConcept ? (
             <div className="flex items-center gap-3 py-8 justify-center">
               <Loader2 className="h-6 w-6 animate-spin rune-text" />
-              <span className="text-muted-foreground font-medium animate-pulse">Master concept sedang di-generate...</span>
+              <span className="text-muted-foreground font-medium animate-pulse">Master concept sedang ditempa...</span>
             </div>
           ) : (
             novel.master_concept && <FormattedContent content={novel.master_concept} />
@@ -352,17 +366,17 @@ LONG narration + LONG dialogue. Make the story alive.`;
             </h2>
             <Button onClick={() => generate("chapter")} disabled={generating || generatingConcept} className="rune-glow">
               {generating ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1 h-4 w-4" />}
-              Generate Bab Berikutnya
+              Tempa Bab Berikutnya
             </Button>
           </div>
 
           {/* Streaming output */}
           {generating && (
-            <div className="rounded-lg bg-parchment dark:bg-secondary p-6 space-y-4">
+            <div className="rounded-lg bg-parchment dark:bg-secondary p-6 space-y-4 rune-border">
               <div className="flex items-center gap-3">
                 <Loader2 className="h-5 w-5 animate-spin rune-text flex-shrink-0" />
-                <span className="text-sm font-medium rune-text animate-pulse">
-                  ᛟ Chapter {(chapters.length > 0 ? chapters[chapters.length - 1].chapter_number : 0) + 1} sedang di-generate...
+                <span className="text-sm font-medium rune-text animate-pulse font-display">
+                  ᛟ Chapter {(chapters.length > 0 ? chapters[chapters.length - 1].chapter_number : 0) + 1} sedang ditempa...
                 </span>
               </div>
               {streamText && (
@@ -376,14 +390,14 @@ LONG narration + LONG dialogue. Make the story alive.`;
 
           {chapters.length === 0 && !generating ? (
             <p className="text-sm text-muted-foreground">
-              Belum ada bab. Generate master concept terlebih dahulu, lalu generate bab pertama.
+              Belum ada bab. Generate master concept terlebih dahulu, lalu tempa bab pertama.
             </p>
           ) : (
             <div className="space-y-2">
               {chapters.map((chapter) => (
                 <div
                   key={chapter.id}
-                  className="flex items-center justify-between rounded-lg rune-border bg-secondary/30 p-4 transition-colors hover:bg-secondary/50"
+                  className="flex items-center justify-between rounded-lg rune-border bg-secondary/30 p-4 transition-all hover:bg-secondary/50 hover:rune-glow"
                 >
                   <div className="flex-1">
                     <h3 className="font-display font-medium">
