@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, X } from "lucide-react";
+import { ArrowLeft, Loader2, X, Sparkles, Shield, Scroll, Feather } from "lucide-react";
 import { Link } from "react-router-dom";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 
 const GENRE_OPTIONS = [
   "Cultivation", "Western Fantasy", "RPG", "Romance", "Sci-Fi",
@@ -102,7 +103,7 @@ export default function CreateNovel() {
         .single();
 
       if (error) throw error;
-      toast({ title: "Novel berhasil dibuat!" });
+      toast({ title: "Novel berhasil ditempa!" });
       navigate(`/novel/${data.id}`);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -119,112 +120,132 @@ export default function CreateNovel() {
           <Link to="/"><ArrowLeft className="mr-1 h-4 w-4" /> Kembali</Link>
         </Button>
 
-        <h1 className="font-display text-3xl font-bold mb-6 rune-text">ᛟ Buat Novel Baru</h1>
+        {/* Mythical Header */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center gap-2 items-center mb-3">
+            <div className="h-px w-12 bg-gradient-to-r from-transparent to-primary/40" />
+            <Shield className="h-5 w-5 rune-text" />
+            <div className="h-px w-12 bg-gradient-to-l from-transparent to-primary/40" />
+          </div>
+          <h1 className="font-display text-3xl font-bold rune-text">Tempa Novel Baru</h1>
+          <p className="text-muted-foreground text-sm mt-1">Ciptakan legenda baru di gulungan kosong ini</p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="title">Judul *</Label>
-            <Input id="title" value={form.title} onChange={(e) => updateField("title", e.target.value)} placeholder="Judul novel..." />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Genre * (pilih satu atau lebih)</Label>
-            <div className="flex flex-wrap gap-2">
-              {GENRE_OPTIONS.map((genre) => (
-                <Badge key={genre} variant={form.genres.includes(genre) ? "default" : "outline"} className="cursor-pointer transition-colors" onClick={() => toggleGenre(genre)}>
-                  {genre}
-                </Badge>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Input placeholder="Genre kustom..." value={customGenre} onChange={(e) => setCustomGenre(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomGenre(); } }} className="flex-1" />
-              <Button type="button" variant="outline" size="sm" onClick={addCustomGenre}>Tambah</Button>
-            </div>
-            {form.genres.filter((g) => !GENRE_OPTIONS.includes(g)).length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {form.genres.filter((g) => !GENRE_OPTIONS.includes(g)).map((g) => (
-                  <Badge key={g} className="cursor-pointer" onClick={() => toggleGenre(g)}>{g} <X className="ml-1 h-3 w-3" /></Badge>
-                ))}
+          {/* Core Info */}
+          <CollapsibleSection icon={<Scroll className="h-5 w-5 rune-text" />} title="Informasi Dasar" defaultOpen hasContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Judul *</Label>
+                <Input id="title" value={form.title} onChange={(e) => updateField("title", e.target.value)} placeholder="Judul novel..." className="rune-border" />
               </div>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="synopsis">Sinopsis / Premis *</Label>
-            <Textarea id="synopsis" value={form.synopsis} onChange={(e) => updateField("synopsis", e.target.value)} rows={5} placeholder="Ceritakan premis novel..." />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Tags</Label>
-            <div className="flex gap-2">
-              <Input placeholder="Tambah tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }} />
-              <Button type="button" variant="outline" size="sm" onClick={addTag}>Tambah</Button>
-            </div>
-            {form.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {form.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>{tag} <X className="ml-1 h-3 w-3" /></Badge>
-                ))}
+              <div className="space-y-2">
+                <Label>Genre * (pilih satu atau lebih)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {GENRE_OPTIONS.map((genre) => (
+                    <Badge key={genre} variant={form.genres.includes(genre) ? "default" : "outline"} className={`cursor-pointer transition-all ${form.genres.includes(genre) ? "rune-glow" : ""}`} onClick={() => toggleGenre(genre)}>
+                      {genre}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input placeholder="Genre kustom..." value={customGenre} onChange={(e) => setCustomGenre(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomGenre(); } }} className="flex-1 rune-border" />
+                  <Button type="button" variant="outline" size="sm" onClick={addCustomGenre} className="rune-border">Tambah</Button>
+                </div>
+                {form.genres.filter((g) => !GENRE_OPTIONS.includes(g)).length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {form.genres.filter((g) => !GENRE_OPTIONS.includes(g)).map((g) => (
+                      <Badge key={g} className="cursor-pointer" onClick={() => toggleGenre(g)}>{g} <X className="ml-1 h-3 w-3" /></Badge>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Bahasa</Label>
-              <Select value={form.language} onValueChange={(v) => updateField("language", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {LANGUAGE_OPTIONS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label htmlFor="synopsis">Sinopsis / Premis *</Label>
+                <Textarea id="synopsis" value={form.synopsis} onChange={(e) => updateField("synopsis", e.target.value)} rows={5} placeholder="Ceritakan premis novel..." className="rune-border" />
+              </div>
             </div>
+          </CollapsibleSection>
 
-            <div className="space-y-2">
-              <Label>Model AI (Ollama)</Label>
-              <Select value={form.model} onValueChange={(v) => updateField("model", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {OLLAMA_MODELS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                </SelectContent>
-              </Select>
+          {/* Tags & Settings */}
+          <CollapsibleSection icon={<Feather className="h-5 w-5 rune-text" />} title="Pengaturan Lanjutan" hasContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Tags</Label>
+                <div className="flex gap-2">
+                  <Input placeholder="Tambah tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }} className="rune-border" />
+                  <Button type="button" variant="outline" size="sm" onClick={addTag} className="rune-border">Tambah</Button>
+                </div>
+                {form.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {form.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>{tag} <X className="ml-1 h-3 w-3" /></Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Bahasa</Label>
+                  <Select value={form.language} onValueChange={(v) => updateField("language", v)}>
+                    <SelectTrigger className="rune-border"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {LANGUAGE_OPTIONS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Model AI</Label>
+                  <Select value={form.model} onValueChange={(v) => updateField("model", v)}>
+                    <SelectTrigger className="rune-border"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {OLLAMA_MODELS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Gaya Penulisan</Label>
+                <Select value={form.writing_style} onValueChange={(v) => updateField("writing_style", v)}>
+                  <SelectTrigger className="rune-border"><SelectValue placeholder="Pilih gaya..." /></SelectTrigger>
+                  <SelectContent>
+                    {WRITING_STYLES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Gaya Cerita</Label>
+                <div className="flex flex-wrap gap-2">
+                  {STORY_STYLES.map((style) => (
+                    <Badge key={style} variant={form.story_styles.includes(style) ? "default" : "outline"} className={`cursor-pointer transition-all ${form.story_styles.includes(style) ? "rune-glow" : ""}`} onClick={() => toggleStoryStyle(style)}>
+                      {style}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="target_chapters">Target Jumlah Bab</Label>
+                  <Input id="target_chapters" type="number" min={1} value={form.target_chapters} onChange={(e) => updateField("target_chapters", parseInt(e.target.value) || 1)} className="rune-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cover_image">Cover Image URL</Label>
+                  <Input id="cover_image" value={form.cover_image} onChange={(e) => updateField("cover_image", e.target.value)} placeholder="https://..." className="rune-border" />
+                </div>
+              </div>
             </div>
-          </div>
+          </CollapsibleSection>
 
-          <div className="space-y-2">
-            <Label>Gaya Penulisan</Label>
-            <Select value={form.writing_style} onValueChange={(v) => updateField("writing_style", v)}>
-              <SelectTrigger><SelectValue placeholder="Pilih gaya..." /></SelectTrigger>
-              <SelectContent>
-                {WRITING_STYLES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Gaya Cerita</Label>
-            <div className="flex flex-wrap gap-2">
-              {STORY_STYLES.map((style) => (
-                <Badge key={style} variant={form.story_styles.includes(style) ? "default" : "outline"} className="cursor-pointer transition-colors" onClick={() => toggleStoryStyle(style)}>
-                  {style}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="target_chapters">Target Jumlah Bab</Label>
-            <Input id="target_chapters" type="number" min={1} value={form.target_chapters} onChange={(e) => updateField("target_chapters", parseInt(e.target.value) || 1)} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="cover_image">Cover Image URL</Label>
-            <Input id="cover_image" value={form.cover_image} onChange={(e) => updateField("cover_image", e.target.value)} placeholder="https://..." />
-          </div>
-
-          <Button type="submit" className="w-full rune-glow" disabled={saving}>
+          <Button type="submit" className="w-full rune-glow text-lg py-6" disabled={saving}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            ᛟ Simpan Novel
+            <Sparkles className="mr-2 h-5 w-5" /> Tempa Novel
           </Button>
         </form>
       </main>

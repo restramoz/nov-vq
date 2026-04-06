@@ -3,6 +3,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { MusicProvider, useMusic } from "@/contexts/MusicContext";
+import { GlobalMusicPlayer } from "@/components/GlobalMusicPlayer";
 import Index from "./pages/Index";
 import CreateNovel from "./pages/CreateNovel";
 import NovelDetail from "./pages/NovelDetail";
@@ -12,20 +14,32 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+function AppContent() {
+  const { audioUrl, novelTitle } = useMusic();
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/create" element={<CreateNovel />} />
+        <Route path="/novel/:id" element={<NovelDetail />} />
+        <Route path="/novel/:id/read" element={<ChapterReader />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <GlobalMusicPlayer audioUrl={audioUrl} novelTitle={novelTitle} />
+    </>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/create" element={<CreateNovel />} />
-          <Route path="/novel/:id" element={<NovelDetail />} />
-          <Route path="/novel/:id/read" element={<ChapterReader />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <MusicProvider>
+          <AppContent />
+        </MusicProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
