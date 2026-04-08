@@ -283,12 +283,15 @@ LONG narration + LONG dialogue. Make the story alive.`;
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-2">
+                <div className="flex flex-wrap gap-2 pt-2">
                   {chapters.length > 0 && (
-                    <Button asChild className="rune-glow">
+                    <Button asChild className="rune-glow" size="sm">
                       <Link to={`/novel/${id}/read`}><BookOpen className="mr-1 h-4 w-4" /> Baca</Link>
                     </Button>
                   )}
+                  <Button asChild variant="outline" size="sm" className="rune-border">
+                    <Link to={`/novel/${id}/world`}><Globe className="mr-1 h-4 w-4" /> Worldbuilding</Link>
+                  </Button>
                 </div>
               </div>
             </div>
