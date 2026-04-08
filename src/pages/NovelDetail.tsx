@@ -7,13 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, BookOpen, Trash2, Loader2, Sparkles, RefreshCw,
-  FileText, Feather, ScrollText, Shield,
+  FileText, Feather, ScrollText, Shield, Globe, Pencil,
 } from "lucide-react";
 import { FormattedContent } from "@/components/FormattedContent";
 import { CharacterList } from "@/components/CharacterList";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { EditNovelDialog } from "@/components/EditNovelDialog";
+import { AICouncil, getDefaultCouncil, saveCouncil, type CouncilMember } from "@/components/AICouncil";
 import { ollamaGenerateStream } from "@/lib/ollama";
 import { getPromptForPhase, PROMPTS } from "@/lib/prompts";
 import { useMusic } from "@/contexts/MusicContext";
