@@ -420,11 +420,14 @@ LONG narration + LONG dialogue. Make the story alive.`;
                       {chapter.word_count?.toLocaleString()} kata
                     </p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button asChild variant="ghost" size="sm">
+                  <div className="flex gap-1">
+                    <Button asChild variant="ghost" size="sm" title="Baca">
                       <Link to={`/novel/${id}/read`}><BookOpen className="h-4 w-4" /></Link>
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteChapter(chapter.id)} className="text-destructive hover:text-destructive">
+                    <Button asChild variant="ghost" size="sm" title="Edit">
+                      <Link to={`/novel/${id}/edit?chapter=${chapter.chapter_number}`}><Pencil className="h-4 w-4" /></Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => deleteChapter(chapter.id)} className="text-destructive hover:text-destructive" title="Hapus">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
