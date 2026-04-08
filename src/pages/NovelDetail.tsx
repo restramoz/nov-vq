@@ -30,6 +30,12 @@ export default function NovelDetail() {
   const [generating, setGenerating] = useState(false);
   const [generatingConcept, setGeneratingConcept] = useState(false);
   const [streamText, setStreamText] = useState("");
+  const [council, setCouncil] = useState<CouncilMember[]>(getDefaultCouncil());
+
+  const handleCouncilChange = (newCouncil: CouncilMember[]) => {
+    setCouncil(newCouncil);
+    saveCouncil(newCouncil);
+  };
 
   const fetchNovel = useCallback(async () => {
     if (!id) return;
