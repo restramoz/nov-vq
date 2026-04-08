@@ -365,6 +365,9 @@ LONG narration + LONG dialogue. Make the story alive.`;
           )}
         </CollapsibleSection>
 
+        {/* AI Council */}
+        <AICouncil council={council} onCouncilChange={handleCouncilChange} />
+
         {/* Characters */}
         <CharacterList novelId={id!} novel={novel} characters={characters} onRefresh={fetchNovel} />
 
