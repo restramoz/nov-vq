@@ -23,6 +23,8 @@ const OLLAMA_MODELS = [
   "deepseek-v3.2:cloud",
   "glm-5:cloud",
   "nemotron-3-super:cloud",
+  "qwen3.5:cloud",
+  "gemini-flash:cloud",
 ];
 
 export default function SettingsPage() {
