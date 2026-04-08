@@ -7,13 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, BookOpen, Trash2, Loader2, Sparkles, RefreshCw,
-  FileText, Feather, ScrollText, Shield,
+  FileText, Feather, ScrollText, Shield, Globe, Pencil,
 } from "lucide-react";
 import { FormattedContent } from "@/components/FormattedContent";
 import { CharacterList } from "@/components/CharacterList";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { EditNovelDialog } from "@/components/EditNovelDialog";
+import { AICouncil, getDefaultCouncil, saveCouncil, type CouncilMember } from "@/components/AICouncil";
 import { ollamaGenerateStream } from "@/lib/ollama";
 import { getPromptForPhase, PROMPTS } from "@/lib/prompts";
 import { useMusic } from "@/contexts/MusicContext";
@@ -29,6 +30,12 @@ export default function NovelDetail() {
   const [generating, setGenerating] = useState(false);
   const [generatingConcept, setGeneratingConcept] = useState(false);
   const [streamText, setStreamText] = useState("");
+  const [council, setCouncil] = useState<CouncilMember[]>(getDefaultCouncil());
+
+  const handleCouncilChange = (newCouncil: CouncilMember[]) => {
+    setCouncil(newCouncil);
+    saveCouncil(newCouncil);
+  };
 
   const fetchNovel = useCallback(async () => {
     if (!id) return;
@@ -276,12 +283,15 @@ LONG narration + LONG dialogue. Make the story alive.`;
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-2">
+                <div className="flex flex-wrap gap-2 pt-2">
                   {chapters.length > 0 && (
-                    <Button asChild className="rune-glow">
+                    <Button asChild className="rune-glow" size="sm">
                       <Link to={`/novel/${id}/read`}><BookOpen className="mr-1 h-4 w-4" /> Baca</Link>
                     </Button>
                   )}
+                  <Button asChild variant="outline" size="sm" className="rune-border">
+                    <Link to={`/novel/${id}/world`}><Globe className="mr-1 h-4 w-4" /> Worldbuilding</Link>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -355,6 +365,9 @@ LONG narration + LONG dialogue. Make the story alive.`;
           )}
         </CollapsibleSection>
 
+        {/* AI Council */}
+        <AICouncil council={council} onCouncilChange={handleCouncilChange} />
+
         {/* Characters */}
         <CharacterList novelId={id!} novel={novel} characters={characters} onRefresh={fetchNovel} />
 
@@ -407,11 +420,14 @@ LONG narration + LONG dialogue. Make the story alive.`;
                       {chapter.word_count?.toLocaleString()} kata
                     </p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button asChild variant="ghost" size="sm">
+                  <div className="flex gap-1">
+                    <Button asChild variant="ghost" size="sm" title="Baca">
                       <Link to={`/novel/${id}/read`}><BookOpen className="h-4 w-4" /></Link>
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteChapter(chapter.id)} className="text-destructive hover:text-destructive">
+                    <Button asChild variant="ghost" size="sm" title="Edit">
+                      <Link to={`/novel/${id}/edit?chapter=${chapter.chapter_number}`}><Pencil className="h-4 w-4" /></Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => deleteChapter(chapter.id)} className="text-destructive hover:text-destructive" title="Hapus">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

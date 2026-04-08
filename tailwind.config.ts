@@ -14,9 +14,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['"Playfair Display"', 'Georgia', 'serif'],
+        display: ['"MedievalSharp"', '"Playfair Display"', 'Georgia', 'serif'],
         body: ['Inter', 'system-ui', 'sans-serif'],
         serif: ['Lora', 'Georgia', 'serif'],
+        rune: ['"MedievalSharp"', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -64,6 +65,11 @@ export default {
           glow: "hsl(var(--rune-glow))",
           dark: "hsl(var(--rune-dark))",
         },
+        mystic: "hsl(var(--mystic))",
+        "night-blue": "hsl(var(--night-blue))",
+        blood: "hsl(var(--blood))",
+        abyss: "hsl(var(--abyss))",
+        "deep-dark": "hsl(var(--deep-dark))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

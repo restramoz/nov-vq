@@ -10,6 +10,8 @@ import CreateNovel from "./pages/CreateNovel";
 import NovelDetail from "./pages/NovelDetail";
 import ChapterReader from "./pages/ChapterReader";
 import SettingsPage from "./pages/Settings";
+import Worldbuilding from "./pages/Worldbuilding";
+import Editor from "./pages/Editor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +25,8 @@ function AppContent() {
         <Route path="/create" element={<CreateNovel />} />
         <Route path="/novel/:id" element={<NovelDetail />} />
         <Route path="/novel/:id/read" element={<ChapterReader />} />
+        <Route path="/novel/:id/world" element={<Worldbuilding />} />
+        <Route path="/novel/:id/edit" element={<Editor />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

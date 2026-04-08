@@ -45,62 +45,74 @@
     --sidebar-border: 35 18% 82%;
     --sidebar-ring: 38 72% 48%;
 
+    /* Design System Palette */
     --gold: 38 72% 48%;
-    --gold-light: 40 65% 68%;
+    --gold-light: 40 55% 75%;
     --gold-dark: 35 75% 32%;
     --parchment: 40 25% 91%;
     --ink: 30 15% 12%;
     --rune: 38 72% 48%;
     --rune-glow: 38 80% 60%;
     --rune-dark: 30 20% 18%;
+    --mystic: 275 60% 26%;
+    --night-blue: 210 55% 26%;
+    --blood: 0 55% 26%;
+    --abyss: 30 60% 9%;
+    --deep-dark: 35 40% 6%;
   }
 
   .dark {
-    --background: 225 25% 6%;
+    /* Deep Dark background from design system */
+    --background: 30 30% 5%;
     --foreground: 38 30% 88%;
 
-    --card: 225 22% 10%;
+    --card: 30 25% 8%;
     --card-foreground: 38 30% 88%;
 
-    --popover: 225 22% 10%;
+    --popover: 30 25% 8%;
     --popover-foreground: 38 30% 88%;
 
     --primary: 38 72% 48%;
-    --primary-foreground: 225 25% 6%;
+    --primary-foreground: 30 30% 5%;
 
-    --secondary: 225 18% 15%;
+    --secondary: 30 20% 13%;
     --secondary-foreground: 38 25% 82%;
 
-    --muted: 225 18% 13%;
-    --muted-foreground: 225 12% 52%;
+    --muted: 30 18% 11%;
+    --muted-foreground: 30 12% 48%;
 
     --accent: 38 60% 52%;
-    --accent-foreground: 225 25% 6%;
+    --accent-foreground: 30 30% 5%;
 
     --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 225 18% 16%;
-    --input: 225 18% 16%;
+    --border: 30 20% 14%;
+    --input: 30 20% 14%;
     --ring: 38 72% 48%;
 
-    --sidebar-background: 225 22% 8%;
+    --sidebar-background: 30 25% 7%;
     --sidebar-foreground: 38 25% 82%;
     --sidebar-primary: 38 72% 48%;
-    --sidebar-primary-foreground: 225 25% 6%;
-    --sidebar-accent: 225 18% 13%;
+    --sidebar-primary-foreground: 30 30% 5%;
+    --sidebar-accent: 30 18% 11%;
     --sidebar-accent-foreground: 38 25% 82%;
-    --sidebar-border: 225 18% 16%;
+    --sidebar-border: 30 20% 14%;
     --sidebar-ring: 38 72% 48%;
 
     --gold: 38 72% 48%;
-    --gold-light: 40 65% 62%;
+    --gold-light: 40 55% 62%;
     --gold-dark: 35 75% 38%;
-    --parchment: 225 18% 12%;
+    --parchment: 30 18% 10%;
     --ink: 38 30% 88%;
     --rune: 38 72% 48%;
     --rune-glow: 38 80% 55%;
-    --rune-dark: 225 25% 4%;
+    --rune-dark: 30 30% 3%;
+    --mystic: 275 60% 30%;
+    --night-blue: 210 55% 30%;
+    --blood: 0 55% 30%;
+    --abyss: 30 40% 7%;
+    --deep-dark: 30 30% 4%;
   }
 }
 
@@ -148,6 +160,62 @@
     text-shadow: 0 0 8px hsl(var(--rune-glow) / 0.3);
   }
 
+  .mystic-text {
+    color: hsl(var(--mystic));
+    text-shadow: 0 0 8px hsl(var(--mystic) / 0.4);
+  }
+
+  .night-text {
+    color: hsl(var(--night-blue));
+    text-shadow: 0 0 8px hsl(var(--night-blue) / 0.4);
+  }
+
+  .blood-text {
+    color: hsl(var(--blood));
+    text-shadow: 0 0 8px hsl(var(--blood) / 0.4);
+  }
+
+  .mystic-badge {
+    @apply border;
+    border-color: hsl(var(--mystic) / 0.4);
+    color: hsl(var(--mystic));
+    background: hsl(var(--mystic) / 0.1);
+  }
+
+  .night-badge {
+    @apply border;
+    border-color: hsl(var(--night-blue) / 0.4);
+    color: hsl(var(--night-blue));
+    background: hsl(var(--night-blue) / 0.1);
+  }
+
+  .blood-badge {
+    @apply border;
+    border-color: hsl(var(--blood) / 0.4);
+    color: hsl(var(--blood));
+    background: hsl(var(--blood) / 0.1);
+  }
+
+  /* Corner ornaments for mythical containers */
+  .mythical-frame {
+    position: relative;
+  }
+  .mythical-frame::before,
+  .mythical-frame::after {
+    content: '◆';
+    position: absolute;
+    color: hsl(var(--gold) / 0.3);
+    font-size: 8px;
+  }
+  .mythical-frame::before {
+    top: -4px;
+    left: -4px;
+  }
+  .mythical-frame::after {
+    top: -4px;
+    right: -4px;
+  }
+
   .prose-reader {
     @apply font-serif text-lg leading-relaxed;
   }
@@ -158,6 +226,26 @@
 
   .prose-reader h1, .prose-reader h2, .prose-reader h3 {
     @apply font-display mb-4 mt-8;
+  }
+
+  /* AI Council indicators */
+  .council-writer {
+    @apply inline-flex items-center gap-1.5;
+  }
+  .council-writer::before {
+    content: '';
+    @apply w-2 h-2 rounded-full;
+    background: hsl(120 50% 45%);
+  }
+  .council-analyst::before {
+    content: '';
+    @apply w-2 h-2 rounded-full;
+    background: hsl(var(--night-blue));
+  }
+  .council-reviewer::before {
+    content: '';
+    @apply w-2 h-2 rounded-full;
+    background: hsl(var(--mystic));
   }
 }
 
@@ -193,13 +281,14 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted;
+  background: hsl(var(--deep-dark));
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-full;
+  @apply rounded-full;
+  background: hsl(var(--gold) / 0.3);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+  background: hsl(var(--gold) / 0.5);
 }
