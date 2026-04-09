@@ -155,15 +155,21 @@ LONG narration + LONG dialogue. Make the story alive.`;
       }
 
       if (isChapter) {
-        let fullText = "";
-        for await (const chunk of ollamaGenerateStream([
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ])) {
-          fullText += chunk;
-          setStreamText(fullText);
-        }
+        // Build novel context for Analyst
+        const novelContext = `Novel: ${novel.title}\nGenres: ${novel.genres.join(", ")}\nSynopsis: ${novel.synopsis}\n${characterContext}\n${novel.master_concept ? `Master Concept: ${novel.master_concept.slice(0, 1000)}` : ""}`;
 
+        // Run full AI Council pipeline: Writer → Analyst → Reviewer
+        setCouncilResult(INITIAL_COUNCIL_RESULT);
+        const councilFinalResult = await runCouncilPipeline(
+          council,
+          systemPrompt,
+          userPrompt,
+          novelContext,
+          (update) => setCouncilResult(prev => ({ ...prev, ...update })),
+          (chunk) => setStreamText(prev => prev + chunk),
+        );
+
+        const fullText = councilFinalResult.writerOutput;
         const titleMatch = fullText.match(/^(?:Chapter\s+\d+[:\s]+)(.+?)(?:\n|$)/i);
         const chapterTitle = titleMatch ? titleMatch[1].trim() : `Chapter ${nextChapterNum}`;
         const wordCount = fullText.split(/\s+/).length;
@@ -179,7 +185,11 @@ LONG narration + LONG dialogue. Make the story alive.`;
         const totalWords = chapters.reduce((sum: number, c: any) => sum + c.word_count, 0) + wordCount;
         await supabase.from("novels").update({ word_count: totalWords, status: "ongoing" }).eq("id", id);
 
-        toast({ title: `Chapter ${nextChapterNum} berhasil ditempa!` });
+        const score = councilFinalResult.qualityScore;
+        toast({
+          title: `Chapter ${nextChapterNum} berhasil ditempa!`,
+          description: score ? `Skor kualitas: ${score}/100` : undefined,
+        });
         setStreamText("");
       } else {
         let fullText = "";
