@@ -31,7 +31,7 @@ function PhaseIndicator({ phase, targetPhase, icon, label }: {
   
   const isActive = phase === targetPhase;
   const isDone = currentIdx > targetIdx || phase === "done";
-  const isPending = currentIdx < targetIdx;
+  const _isPending = currentIdx < targetIdx;
 
   return (
     <div className={`flex items-center gap-2 rounded-lg p-2.5 transition-all ${
