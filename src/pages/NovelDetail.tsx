@@ -16,8 +16,9 @@ import { MusicPlayer } from "@/components/MusicPlayer";
 import { EditNovelDialog } from "@/components/EditNovelDialog";
 import { AICouncil, getDefaultCouncil, saveCouncil, type CouncilMember } from "@/components/AICouncil";
 import { CouncilProgress } from "@/components/CouncilProgress";
-import { getPromptForPhase, PROMPTS } from "@/lib/prompts";
 import { runCouncilPipeline, INITIAL_COUNCIL_RESULT, type CouncilResult } from "@/lib/council";
+import { ollamaGenerateStream } from "@/lib/ollama";
+import { getPromptForPhase, PROMPTS } from "@/lib/prompts";
 import { useMusic } from "@/contexts/MusicContext";
 
 export default function NovelDetail() {
