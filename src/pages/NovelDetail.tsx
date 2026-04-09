@@ -33,6 +33,7 @@ export default function NovelDetail() {
   const [generatingConcept, setGeneratingConcept] = useState(false);
   const [streamText, setStreamText] = useState("");
   const [council, setCouncil] = useState<CouncilMember[]>(getDefaultCouncil());
+  const [councilResult, setCouncilResult] = useState<CouncilResult>(INITIAL_COUNCIL_RESULT);
 
   const handleCouncilChange = (newCouncil: CouncilMember[]) => {
     setCouncil(newCouncil);
