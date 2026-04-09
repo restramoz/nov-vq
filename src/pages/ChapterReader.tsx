@@ -28,27 +28,17 @@ export default function ChapterReader() {
   const [tocOpen, setTocOpen] = useState(false);
   const [readProgress, setReadProgress] = useState(0);
   const [currentChapter, setCurrentChapter] = useState(0);
-  const [menuVisible, setMenuVisible] = useState(true);
+  const [menuVisible, setMenuVisible] = useState(false);
   const chapterRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const contentRef = useRef<HTMLDivElement>(null);
   const restoredRef = useRef(false);
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-hide menu after 3s
-  useEffect(() => {
-    const resetTimer = () => {
-      setMenuVisible(true);
-      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = setTimeout(() => setMenuVisible(false), 3000);
-    };
-    resetTimer();
-    window.addEventListener("mousemove", resetTimer);
-    window.addEventListener("touchstart", resetTimer);
-    return () => {
-      window.removeEventListener("mousemove", resetTimer);
-      window.removeEventListener("touchstart", resetTimer);
-      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-    };
+  // Toggle menu on tap/click on reading area
+  const handleContentClick = useCallback((e: React.MouseEvent) => {
+    // Don't toggle if clicking a button, link, or interactive element
+    const target = e.target as HTMLElement;
+    if (target.closest("button, a, nav, aside")) return;
+    setMenuVisible(prev => !prev);
   }, []);
 
   useEffect(() => {
@@ -130,7 +120,7 @@ export default function ChapterReader() {
   }
 
   return (
-    <div className="min-h-screen bg-background mystical-reader">
+    <div className="min-h-screen bg-background mystical-reader" onClick={handleContentClick}>
       {/* Progress bar - rune styled */}
       <div className="fixed top-0 left-0 right-0 z-[60]">
         <Progress value={readProgress} className="h-1 rounded-none" />
