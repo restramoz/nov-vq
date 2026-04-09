@@ -15,6 +15,8 @@ import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { EditNovelDialog } from "@/components/EditNovelDialog";
 import { AICouncil, getDefaultCouncil, saveCouncil, type CouncilMember } from "@/components/AICouncil";
+import { CouncilProgress } from "@/components/CouncilProgress";
+import { runCouncilPipeline, INITIAL_COUNCIL_RESULT, type CouncilResult } from "@/lib/council";
 import { ollamaGenerateStream } from "@/lib/ollama";
 import { getPromptForPhase, PROMPTS } from "@/lib/prompts";
 import { useMusic } from "@/contexts/MusicContext";
@@ -31,6 +33,7 @@ export default function NovelDetail() {
   const [generatingConcept, setGeneratingConcept] = useState(false);
   const [streamText, setStreamText] = useState("");
   const [council, setCouncil] = useState<CouncilMember[]>(getDefaultCouncil());
+  const [councilResult, setCouncilResult] = useState<CouncilResult>(INITIAL_COUNCIL_RESULT);
 
   const handleCouncilChange = (newCouncil: CouncilMember[]) => {
     setCouncil(newCouncil);
@@ -152,15 +155,21 @@ LONG narration + LONG dialogue. Make the story alive.`;
       }
 
       if (isChapter) {
-        let fullText = "";
-        for await (const chunk of ollamaGenerateStream([
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ])) {
-          fullText += chunk;
-          setStreamText(fullText);
-        }
+        // Build novel context for Analyst
+        const novelContext = `Novel: ${novel.title}\nGenres: ${novel.genres.join(", ")}\nSynopsis: ${novel.synopsis}\n${characterContext}\n${novel.master_concept ? `Master Concept: ${novel.master_concept.slice(0, 1000)}` : ""}`;
 
+        // Run full AI Council pipeline: Writer → Analyst → Reviewer
+        setCouncilResult(INITIAL_COUNCIL_RESULT);
+        const councilFinalResult = await runCouncilPipeline(
+          council,
+          systemPrompt,
+          userPrompt,
+          novelContext,
+          (update) => setCouncilResult(prev => ({ ...prev, ...update })),
+          (chunk) => setStreamText(prev => prev + chunk),
+        );
+
+        const fullText = councilFinalResult.writerOutput;
         const titleMatch = fullText.match(/^(?:Chapter\s+\d+[:\s]+)(.+?)(?:\n|$)/i);
         const chapterTitle = titleMatch ? titleMatch[1].trim() : `Chapter ${nextChapterNum}`;
         const wordCount = fullText.split(/\s+/).length;
@@ -176,7 +185,11 @@ LONG narration + LONG dialogue. Make the story alive.`;
         const totalWords = chapters.reduce((sum: number, c: any) => sum + c.word_count, 0) + wordCount;
         await supabase.from("novels").update({ word_count: totalWords, status: "ongoing" }).eq("id", id);
 
-        toast({ title: `Chapter ${nextChapterNum} berhasil ditempa!` });
+        const score = councilFinalResult.qualityScore;
+        toast({
+          title: `Chapter ${nextChapterNum} berhasil ditempa!`,
+          description: score ? `Skor kualitas: ${score}/100` : undefined,
+        });
         setStreamText("");
       } else {
         let fullText = "";
@@ -383,22 +396,9 @@ LONG narration + LONG dialogue. Make the story alive.`;
             </Button>
           </div>
 
-          {/* Streaming output */}
+          {/* Council Pipeline Progress */}
           {generating && (
-            <div className="rounded-lg bg-parchment dark:bg-secondary p-6 space-y-4 rune-border">
-              <div className="flex items-center gap-3">
-                <Loader2 className="h-5 w-5 animate-spin rune-text flex-shrink-0" />
-                <span className="text-sm font-medium rune-text animate-pulse font-display">
-                  ᛟ Chapter {(chapters.length > 0 ? chapters[chapters.length - 1].chapter_number : 0) + 1} sedang ditempa...
-                </span>
-              </div>
-              {streamText && (
-                <div className="prose-reader max-h-96 overflow-y-auto rounded-lg bg-background/50 p-4 rune-border">
-                  <FormattedContent content={streamText} className="text-sm leading-relaxed mystical-typing" />
-                  <span className="inline-block w-0.5 h-4 bg-primary animate-pulse ml-0.5" />
-                </div>
-              )}
-            </div>
+            <CouncilProgress result={councilResult} streamText={streamText} />
           )}
 
           {chapters.length === 0 && !generating ? (
