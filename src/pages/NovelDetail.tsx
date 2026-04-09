@@ -396,22 +396,9 @@ LONG narration + LONG dialogue. Make the story alive.`;
             </Button>
           </div>
 
-          {/* Streaming output */}
+          {/* Council Pipeline Progress */}
           {generating && (
-            <div className="rounded-lg bg-parchment dark:bg-secondary p-6 space-y-4 rune-border">
-              <div className="flex items-center gap-3">
-                <Loader2 className="h-5 w-5 animate-spin rune-text flex-shrink-0" />
-                <span className="text-sm font-medium rune-text animate-pulse font-display">
-                  ᛟ Chapter {(chapters.length > 0 ? chapters[chapters.length - 1].chapter_number : 0) + 1} sedang ditempa...
-                </span>
-              </div>
-              {streamText && (
-                <div className="prose-reader max-h-96 overflow-y-auto rounded-lg bg-background/50 p-4 rune-border">
-                  <FormattedContent content={streamText} className="text-sm leading-relaxed mystical-typing" />
-                  <span className="inline-block w-0.5 h-4 bg-primary animate-pulse ml-0.5" />
-                </div>
-              )}
-            </div>
+            <CouncilProgress result={councilResult} streamText={streamText} />
           )}
 
           {chapters.length === 0 && !generating ? (
