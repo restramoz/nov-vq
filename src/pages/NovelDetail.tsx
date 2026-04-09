@@ -255,7 +255,7 @@ LONG narration + LONG dialogue. Make the story alive.`;
         {/* Novel Header - Mythical */}
         <div className="rounded-lg rune-border bg-card overflow-hidden">
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
             <div className="flex flex-col sm:flex-row gap-6 p-6">
               <div className="w-full sm:w-48 h-64 rounded-lg overflow-hidden rune-border flex-shrink-0">
                 {novel.cover_image ? (
