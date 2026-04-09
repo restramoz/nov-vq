@@ -164,7 +164,7 @@ IMPORTANT: Return ONLY valid JSON array, no other text. Example:
           Belum ada karakter. Klik "Extract AI" untuk mengekstrak karakter dari premis novel.
         </p>
       ) : !collapsed ? (
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
           {characters.map((char) => (
             <div
               key={char.id}

@@ -120,7 +120,7 @@ export default function ChapterReader() {
   }
 
   return (
-    <div className="min-h-screen bg-background mystical-reader">
+    <div className="min-h-screen bg-background mystical-reader" onClick={handleContentClick}>
       {/* Progress bar - rune styled */}
       <div className="fixed top-0 left-0 right-0 z-[60]">
         <Progress value={readProgress} className="h-1 rounded-none" />
